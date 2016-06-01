@@ -1,0 +1,9 @@
+---
+Name: simple-jobs
+---
+Director:
+  rules:
+    'simple-jobs//$Action/$ID/$Name' : 'SimpleJobsController'
+SimpleJobsController:
+  username: ''
+  password: ''
