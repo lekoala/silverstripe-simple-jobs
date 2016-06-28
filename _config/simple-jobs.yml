@@ -7,3 +7,4 @@ Director:
 SimpleJobsController:
   username: ''
   password: ''
+  store_results: true
