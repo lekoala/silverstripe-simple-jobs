@@ -1,6 +1,6 @@
 SilverStripe Simple Jobs
 ==================
-An alternative to cron jobs that uses simple HTTP requests.
+An alternative to run cron jobs that uses simple HTTP requests.
 
 This module require [SilverStripe CronTask](https://github.com/silverstripe-labs/silverstripe-crontask).
 

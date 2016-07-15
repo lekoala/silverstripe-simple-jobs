@@ -25,8 +25,7 @@ class SimpleJobsController extends Controller
 
         $tasks = $this->allTasks();
         if (empty($tasks)) {
-            $this->output("There are no implementators of CronTask to run");
-            return;
+            return "There are no implementators of CronTask to run";
         }
 
         $subclass = $this->getRequest()->param('ID');
@@ -49,8 +48,7 @@ class SimpleJobsController extends Controller
         $this->basicAuth();
         $tasks = ClassInfo::implementorsOf('CronTask');
         if (empty($tasks)) {
-            $this->output("There are no implementators of CronTask to run");
-            return;
+            return "There are no implementators of CronTask to run";
         }
         foreach ($tasks as $subclass) {
             $task = new $subclass();
