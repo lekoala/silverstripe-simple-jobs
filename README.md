@@ -58,6 +58,26 @@ Predefined schedules
 If you don't like the cron syntax, you can also use any constant from the SimpleJobSchedules class, that
 provides sane defaults for most common schedules.
 
+    class TestCron implements CronTask {
+
+        /**
+         * run this task every every day
+         *
+         * @return string
+         */
+        public function getSchedule() {
+            return SimpleJobsSchedules::EVERY_DAY;
+        }
+
+        /**
+         *
+         * @return void
+         */
+        public function process() {
+            echo 'hello';
+        }
+    }
+
 Compatibility
 ==================
 Tested with 3.x

@@ -11,7 +11,8 @@ class SimpleJobsController extends Controller
         'simple-jobs/$Action/$ID/$OtherID' => 'handleAction',
     );
     private static $allowed_actions = array(
-        'trigger'
+        'trigger',
+        'viewlogs',
     );
 
     public function index()
@@ -40,6 +41,31 @@ class SimpleJobsController extends Controller
             $link = "/simple-jobs/index/".$task;
             $this->output('<a href="'.$link.'">'.$task.'</a>');
             $this->output('<a href="'.$link.'?force=1">'.$task.' (forced run)</a>');
+        }
+
+        if (self::config()->store_results) {
+            $this->output('');
+            $this->output('<a href="/simple-jobs/viewlogs">View 10 most recent log entries</a>');
+            $this->output('<a href="/simple-jobs/viewlogs/100">View 100 most recent log entries</a>');
+        }
+    }
+
+    public function viewlogs()
+    {
+        if (!Director::isDev() && !Permission::check('ADMIN')) {
+            return "View logs is only available in dev mode or for admins";
+        }
+
+        $limit = (int) $this->getRequest()->param('ID');
+        if (!$limit) {
+            $limit = 10;
+        }
+
+        $results = CronTaskResult::get()->limit($limit);
+
+        foreach ($results as $result) {
+            $this->output($result->Status());
+            $this->output($result->PrettyResult());
         }
     }
 
@@ -98,7 +124,7 @@ class SimpleJobsController extends Controller
         // Update status of this task prior to execution in case of interruption
         CronTaskStatus::update_status(get_class($task), $willRun);
         if ($isDue || $forceRun) {
-            $msg = ' will start now.';
+            $msg = ' will start now';
             if (!$isDue && $forceRun) {
                 $msg .= " (forced run)";
             }
@@ -108,9 +134,11 @@ class SimpleJobsController extends Controller
             $error = null;
             try {
                 $result = $task->process();
+                $this->output(CronTaskResult::PrettifyResult($result));
             } catch (Exception $ex) {
                 $result = false;
                 $error  = $ex->getMessage();
+                $this->output(CronTaskResult::PrettifyResult($result));
             }
 
             // Store result if we return something
@@ -128,6 +156,7 @@ class SimpleJobsController extends Controller
                     $cronResult->Result = $result;
                 }
                 $cronResult->TaskClass = get_class($task);
+                $cronResult->ForcedRun = $forceRun;
                 $cronResult->write();
             }
         } else {
