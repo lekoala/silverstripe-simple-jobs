@@ -4,6 +4,10 @@
  * Store the result of a cron task
  *
  * @author Koala
+ * @property string $TaskClass
+ * @property string $Result
+ * @property boolean $Failed
+ * @property boolean $ForcedRun
  */
 class CronTaskResult extends DataObject
 {
