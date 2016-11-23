@@ -4,6 +4,16 @@
  * A common set of schedule
  *
  * If you need more, visit http://www.cronmaker.com/
+ *
+ * # +--------- Minute (0-59)
+ * # | +------- Hour (0-23)
+ * # | | +----- Day Of Month (1-31)
+ * # | | | +--- Month (1-12)
+ * # | | | | +- Day Of Week (0-6) (Sunday = 0)
+ *
+ * Do every X intervals: *[fw_slash]X  -> Example: *[fw_slash]15 * * * *  Is every 15 minutes
+ * Multiple Values Use Commas: 3,12,47
+ * eg daily -> 0 0 * * *; weekly -> 0 0 * * 0; monthly ->0 0 1 * *;
  * 
  * @author Koala
  */
