@@ -7,13 +7,24 @@
  */
 class SimpleJobsController extends Controller
 {
-    private static $url_handlers    = array(
+
+    private static $url_handlers = array(
         'simple-jobs/$Action/$ID/$OtherID' => 'handleAction',
     );
     private static $allowed_actions = array(
         'trigger',
         'viewlogs',
     );
+
+    public function init()
+    {
+        // Avoid multiple auths
+        if (self::config()->username) {
+            $this->basicAuthEnabled = false;
+        }
+
+        parent::init();
+    }
 
     public function index()
     {
@@ -32,15 +43,15 @@ class SimpleJobsController extends Controller
         $subclass = $this->getRequest()->param('ID');
         if ($subclass && in_array($subclass, $tasks)) {
             $forceRun = $this->getRequest()->getVar('force');
-            $task     = new $subclass();
+            $task = new $subclass();
             $this->runTask($task, $forceRun);
             return;
         }
 
         foreach ($tasks as $task) {
-            $link = "/simple-jobs/index/".$task;
-            $this->output('<a href="'.$link.'">'.$task.'</a>');
-            $this->output('<a href="'.$link.'?force=1">'.$task.' (forced run)</a>');
+            $link = "/simple-jobs/index/" . $task;
+            $this->output('<a href="' . $link . '">' . $task . '</a>');
+            $this->output('<a href="' . $link . '?force=1">' . $task . ' (forced run)</a>');
         }
 
         if (self::config()->store_results) {
@@ -96,14 +107,16 @@ class SimpleJobsController extends Controller
         // If the cron is due immediately, then run it
         $now = new DateTime(SS_Datetime::now()->getValue());
         if ($cron->isDue($now)) {
-            if (empty($status) || empty($status->LastRun)) return true;
+            if (empty($status) || empty($status->LastRun))
+                return true;
             // In case this process is invoked twice in one minute, supress subsequent executions
             $lastRun = new DateTime($status->LastRun);
             return $lastRun->format('Y-m-d H:i') != $now->format('Y-m-d H:i');
         }
 
         // If this is the first time this task is ever checked, no way to detect postponed execution
-        if (empty($status) || empty($status->LastChecked)) return false;
+        if (empty($status) || empty($status->LastChecked))
+            return false;
 
         // Determine if we have passed the last expected run time
         $nextExpectedDate = $cron->getNextRunDate($status->LastChecked);
@@ -118,8 +131,8 @@ class SimpleJobsController extends Controller
      */
     protected function runTask(CronTask $task, $forceRun = false)
     {
-        $cron    = Cron\CronExpression::factory($task->getSchedule());
-        $isDue   = $this->isTaskDue($task, $cron);
+        $cron = Cron\CronExpression::factory($task->getSchedule());
+        $isDue = $this->isTaskDue($task, $cron);
         $willRun = $isDue || $forceRun;
         // Update status of this task prior to execution in case of interruption
         CronTaskStatus::update_status(get_class($task), $willRun);
@@ -128,7 +141,7 @@ class SimpleJobsController extends Controller
             if (!$isDue && $forceRun) {
                 $msg .= " (forced run)";
             }
-            $this->output(get_class($task).$msg);
+            $this->output(get_class($task) . $msg);
 
             // Handle exceptions for tasks
             $error = null;
@@ -137,7 +150,7 @@ class SimpleJobsController extends Controller
                 $this->output(CronTaskResult::PrettifyResult($result));
             } catch (Exception $ex) {
                 $result = false;
-                $error  = $ex->getMessage();
+                $error = $ex->getMessage();
                 $this->output(CronTaskResult::PrettifyResult($result));
             }
 
@@ -160,7 +173,7 @@ class SimpleJobsController extends Controller
                 $cronResult->write();
             }
         } else {
-            $this->output(get_class($task).' will run at '.$cron->getNextRunDate()->format('Y-m-d H:i:s').'.');
+            $this->output(get_class($task) . ' will run at ' . $cron->getNextRunDate()->format('Y-m-d H:i:s') . '.');
         }
     }
 
@@ -169,7 +182,7 @@ class SimpleJobsController extends Controller
         if ($escape) {
             $message = Convert::raw2xml($message);
         }
-        echo $message.'<br />'.PHP_EOL;
+        echo $message . '<br />' . PHP_EOL;
     }
 
     protected function allTasks()
@@ -204,28 +217,25 @@ class SimpleJobsController extends Controller
             preg_match('/Basic\s+(.*)$/i', $authHeader, $matches)) {
             list($name, $password) = explode(':', base64_decode($matches[1]));
             $_SERVER['PHP_AUTH_USER'] = strip_tags($name);
-            $_SERVER['PHP_AUTH_PW']   = strip_tags($password);
+            $_SERVER['PHP_AUTH_PW'] = strip_tags($password);
         }
 
         $authSuccess = false;
         if (isset($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW'])) {
-            if ($_SERVER['PHP_AUTH_USER'] == $username && $_SERVER['PHP_AUTH_PW']
-                == $password) {
+            if ($_SERVER['PHP_AUTH_USER'] == $username && $_SERVER['PHP_AUTH_PW'] == $password) {
                 $authSuccess = true;
             }
         }
 
         if (!$authSuccess) {
-            $realm    = "Enter your credentials";
+            $realm = "Enter your credentials";
             $response = new SS_HTTPResponse(null, 401);
             $response->addHeader('WWW-Authenticate', "Basic realm=\"$realm\"");
 
             if (isset($_SERVER['PHP_AUTH_USER'])) {
-                $response->setBody(_t('BasicAuth.ERRORNOTREC',
-                        "That username / password isn't recognised"));
+                $response->setBody(_t('BasicAuth.ERRORNOTREC', "That username / password isn't recognised"));
             } else {
-                $response->setBody(_t('BasicAuth.ENTERINFO',
-                        "Please enter a username and password."));
+                $response->setBody(_t('BasicAuth.ENTERINFO', "Please enter a username and password."));
             }
 
             // Exception is caught by RequestHandler->handleRequest() and will halt further execution
