@@ -29,7 +29,7 @@ enable BasicAuth. Define the following in your config file:
     SimpleJobsController:
       username: 'myusername'
       password: 'mypassword'
-      
+
 And make sure that the proper headers are sent by UptimeRobot or any system you
 use to trigger HTTP requests.
 
@@ -40,6 +40,8 @@ You can also test your tasks by visiting yoursite.com/simple-jobs/.
 
 This is enabled only if Dev mode is active. You can click on any task in the list,
 and choose to run it according to its schedule or force the task to run.
+
+If needed, you can also trigger manually your jobs. Simply visit /simple-jobs/trigger_manual/YourClass.
 
 Log results
 ==================
