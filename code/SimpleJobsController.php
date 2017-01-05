@@ -107,6 +107,9 @@ class SimpleJobsController extends Controller
 
     public function trigger()
     {
+        // Never set a limit longer than the frequency at which this endpoint is called
+        increase_time_limit_to(self::config()->time_limit);
+
         $this->basicAuth();
         $tasks = ClassInfo::implementorsOf('CronTask');
         if (empty($tasks)) {

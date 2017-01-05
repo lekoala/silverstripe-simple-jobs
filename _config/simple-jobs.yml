@@ -8,3 +8,4 @@ SimpleJobsController:
   username: ''
   password: ''
   store_results: true
+  time_limit: 300
