@@ -27,7 +27,7 @@ Using your own requests
 ------------------
 
 Don't like using a service like UptimeRobot ? Feel free to setup your own http requets using
-[Windows Scheduled Tasks](https://technet.microsoft.com/en-us/library/cc748993(v=ws.11).aspx) or another server trigger http requests with Cron.
+[Windows Scheduled Tasks](https://technet.microsoft.com/en-us/library/cc748993(v=ws.11).aspx) or another server using cron.
 
 For instance
 
