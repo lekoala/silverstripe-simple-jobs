@@ -64,6 +64,8 @@ You can also test your tasks by visiting yoursite.com/simple-jobs/.
 This is enabled only if Dev mode is active. You can click on any task in the list,
 and choose to run it according to its schedule or force the task to run.
 
+If needed, you can also trigger manually your jobs. Simply visit /simple-jobs/trigger_manual/YourClass.
+
 Log results
 ==================
 

@@ -11,7 +11,8 @@
  */
 class CronTaskResult extends DataObject
 {
-    private static $db           = array(
+
+    private static $db = array(
         'TaskClass' => 'Varchar(255)',
         'Result' => 'Text',
         'Failed' => 'Boolean',
@@ -27,7 +28,7 @@ class CronTaskResult extends DataObject
         } else {
             $status .= " ran successfully";
         }
-        $status .= " at ".$this->Created;
+        $status .= " at " . $this->Created;
         if ($this->ForcedRun) {
             $status .= ' (forced run)';
         }
@@ -41,7 +42,7 @@ class CronTaskResult extends DataObject
 
     public static function PrettifyResult($result)
     {
-        if(!$result) {
+        if (!$result) {
             $result = 'Task failed';
         }
         if (is_object($result)) {
@@ -49,6 +50,6 @@ class CronTaskResult extends DataObject
         } else if (is_array($result)) {
             $result = json_encode($result);
         }
-        return '<pre> '.$result.'</pre>';
+        return '<pre> ' . $result . '</pre>';
     }
 }

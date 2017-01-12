@@ -13,8 +13,19 @@ class SimpleJobsController extends Controller
     );
     private static $allowed_actions = array(
         'trigger',
+        'trigger_manual',
         'viewlogs',
     );
+
+    public function init()
+    {
+        // Avoid multiple auths
+        if (self::config()->username) {
+            $this->basicAuthEnabled = false;
+        }
+
+        parent::init();
+    }
 
     public function index()
     {
@@ -64,14 +75,41 @@ class SimpleJobsController extends Controller
 
         $results = CronTaskResult::get()->limit($limit);
 
+        if (!$results->count()) {
+            $this->output("No results to display");
+        } else {
+            $this->output("Displaying last $limit results");
+        }
+
         foreach ($results as $result) {
             $this->output($result->Status());
             $this->output($result->PrettyResult());
         }
     }
 
+    public function trigger_manual()
+    {
+        if (!Permission::check('ADMIN')) {
+            return 'You must be logged as an admin';
+        }
+
+        $class = $this->getRequest()->param('ID');
+        if (!$class) {
+            return 'You must specify a class';
+        }
+        if (!class_exists($class)) {
+            return 'Invalid class name';
+        }
+
+        $task = new $class();
+        $this->runTask($task, true);
+    }
+
     public function trigger()
     {
+        // Never set a limit longer than the frequency at which this endpoint is called
+        increase_time_limit_to(self::config()->time_limit);
+
         $this->basicAuth();
 
         $tasks = ClassInfo::implementorsOf('CronTask');
