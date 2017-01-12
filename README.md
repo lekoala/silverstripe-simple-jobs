@@ -15,10 +15,33 @@ to a given script that will take care of any task you have to run.
 How to setup
 ==================
 
+Using an external service
+------------------
+
 Simply call every 5 minutes the following url : yoursite.com/simple-jobs/trigger
 
 In order to do that, you can use for example [UptimeRobot](https://uptimerobot.com/).
 As an added bonus, will you monitor if your webserver is responding which is always nice to have :-).
+
+Using your own requests
+------------------
+
+Don't like usiing a service like UptimeRobot ? Feel free to setup your own http requets using
+Windows Scheduled Class or another server trigger http requests with Cron.
+
+For instance
+
+    * * * * * wget -O - http://yoursite.com/simple-jobs/trigger >/dev/null 2>&1
+
+Using regular cron jobs
+------------------
+
+You can also use this module similarly to the base crontask module, while getting
+all the logging benefits.
+
+Add the following command to your cron definition:
+
+    * * * * * www-data /usr/bin/php /path/to/silverstripe/docroot/framework/cli-script.php simple-jobs/trigger
 
 Enabling BasicAuth
 ==================
@@ -29,7 +52,7 @@ enable BasicAuth. Define the following in your config file:
     SimpleJobsController:
       username: 'myusername'
       password: 'mypassword'
-      
+
 And make sure that the proper headers are sent by UptimeRobot or any system you
 use to trigger HTTP requests.
 
