@@ -103,6 +103,11 @@ provides sane defaults for most common schedules.
         }
     }
 
+It also comes with two methods: everyDay and everyWeek, that allow you to define the task
+to run on a specific hour or day in the week.
+This is useful if you have multiple daily or weekly task and that you don't want to run
+them at the same time (because it could cause a timeout).
+
 Compatibility
 ==================
 Tested with 3.x
