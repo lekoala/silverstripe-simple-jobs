@@ -49,10 +49,15 @@ class SimpleJobsController extends Controller
             return;
         }
 
+        $disabled = self::config()->disabled_tasks;
         foreach ($tasks as $task) {
+            $taskName = $task;
+            if (in_array($taskName, $disabled)) {
+                $taskName .= ' - disabled';
+            }
             $link = "/simple-jobs/index/" . $task;
-            $this->output('<a href="' . $link . '">' . $task . '</a>');
-            $this->output('<a href="' . $link . '?force=1">' . $task . ' (forced run)</a>');
+            $this->output('<a href="' . $link . '">' . $taskName . '</a>');
+            $this->output('<a href="' . $link . '?force=1">' . $taskName . ' (forced run)</a>');
         }
 
         if (self::config()->store_results) {
