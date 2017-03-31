@@ -9,3 +9,4 @@ SimpleJobsController:
   password: ''
   store_results: true
   time_limit: 300
+  disabled_tasks: []

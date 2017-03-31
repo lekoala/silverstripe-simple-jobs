@@ -116,7 +116,13 @@ class SimpleJobsController extends Controller
         if (empty($tasks)) {
             return "There are no implementators of CronTask to run";
         }
+        $disabled = self::config()->disabled_tasks;
         foreach ($tasks as $subclass) {
+            if (in_array($subclass, $disabled)) {
+                $this->output("Task $subclass is disabled");
+                continue;
+            }
+            // Check if disabled
             $task = new $subclass();
             $this->runTask($task);
         }
