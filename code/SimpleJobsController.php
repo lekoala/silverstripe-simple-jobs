@@ -52,7 +52,7 @@ class SimpleJobsController extends Controller
         $disabled = self::config()->disabled_tasks;
         foreach ($tasks as $task) {
             $taskName = $task;
-            if (in_array($taskName, $disabled)) {
+            if ($disabled && in_array($taskName, $disabled)) {
                 $taskName .= ' - disabled';
             }
             $link = "/simple-jobs/index/" . $task;
