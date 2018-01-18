@@ -123,7 +123,7 @@ class SimpleJobsController extends Controller
         }
         $disabled = self::config()->disabled_tasks;
         foreach ($tasks as $subclass) {
-            if (in_array($subclass, $disabled)) {
+            if (Director::isLive() && in_array($subclass, $disabled)) {
                 $this->output("Task $subclass is disabled");
                 continue;
             }
@@ -232,7 +232,7 @@ class SimpleJobsController extends Controller
 
     /**
      * Enable BasicAuth in a similar fashion as BasicAuth class
-     * 
+     *
      * @return boolean
      * @throws SS_HTTPResponse_Exception
      */
