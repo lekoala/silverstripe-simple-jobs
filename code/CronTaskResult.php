@@ -11,7 +11,6 @@
  */
 class CronTaskResult extends DataObject
 {
-
     private static $db = array(
         'TaskClass' => 'Varchar(255)',
         'Result' => 'Text',
@@ -50,7 +49,7 @@ class CronTaskResult extends DataObject
         }
         if (is_object($result)) {
             $result = print_r($result, true);
-        } else if (is_array($result)) {
+        } elseif (is_array($result)) {
             $result = json_encode($result);
         }
         return '<pre> ' . $result . '</pre>';
