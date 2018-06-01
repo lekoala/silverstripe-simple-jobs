@@ -7,7 +7,6 @@
  */
 class SimpleJobsController extends Controller
 {
-
     private static $url_handlers = array(
         'simple-jobs/$Action/$ID/$OtherID' => 'handleAction',
     );
@@ -147,16 +146,18 @@ class SimpleJobsController extends Controller
         // If the cron is due immediately, then run it
         $now = new DateTime(SS_Datetime::now()->getValue());
         if ($cron->isDue($now)) {
-            if (empty($status) || empty($status->LastRun))
+            if (empty($status) || empty($status->LastRun)) {
                 return true;
+            }
             // In case this process is invoked twice in one minute, supress subsequent executions
             $lastRun = new DateTime($status->LastRun);
             return $lastRun->format('Y-m-d H:i') != $now->format('Y-m-d H:i');
         }
 
         // If this is the first time this task is ever checked, no way to detect postponed execution
-        if (empty($status) || empty($status->LastChecked))
+        if (empty($status) || empty($status->LastChecked)) {
             return false;
+        }
 
         // Determine if we have passed the last expected run time
         $nextExpectedDate = $cron->getNextRunDate($status->LastChecked);
@@ -183,6 +184,8 @@ class SimpleJobsController extends Controller
             }
             $this->output(get_class($task) . $msg);
 
+            $startDate = date('Y-m-d H:i:s');
+
             // Handle exceptions for tasks
             $error = null;
             try {
@@ -194,6 +197,9 @@ class SimpleJobsController extends Controller
                 $this->output(CronTaskResult::PrettifyResult($result));
             }
 
+            $endDate = date('Y-m-d H:i:s');
+            $timeToExecute = strtotime($endDate) - strtotime($startDate);
+
             // Store result if we return something
             if (self::config()->store_results && $result !== null) {
                 $cronResult = new CronTaskResult;
@@ -203,13 +209,16 @@ class SimpleJobsController extends Controller
                 } else {
                     if (is_object($result)) {
                         $result = print_r($result, true);
-                    } else if (is_array($result)) {
+                    } elseif (is_array($result)) {
                         $result = json_encode($result);
                     }
                     $cronResult->Result = $result;
                 }
                 $cronResult->TaskClass = get_class($task);
                 $cronResult->ForcedRun = $forceRun;
+                $cronResult->StartDate = $startDate;
+                $cronResult->EndDate = $endDate;
+                $cronResult->TimeToExecute = $timeToExecute;
                 $cronResult->write();
             }
         } else {
@@ -251,7 +260,7 @@ class SimpleJobsController extends Controller
         $authHeader = null;
         if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
             $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
-        } else if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
             $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
         }
 

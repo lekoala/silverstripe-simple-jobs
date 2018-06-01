@@ -17,6 +17,9 @@ class CronTaskResult extends DataObject
         'Result' => 'Text',
         'Failed' => 'Boolean',
         'ForcedRun' => 'Boolean',
+        'StartDate' => 'SS_Datetime',
+        'EndDate' => 'SS_Datetime',
+        'TimeToExecute' => 'Int',
     );
     private static $default_sort = 'Created DESC';
 
