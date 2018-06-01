@@ -130,6 +130,13 @@ class SimpleJobsController extends Controller
             $task = new $subclass();
             $this->runTask($task);
         }
+
+        // Avoid the table to be full of stuff
+        if (self::config()->store_results && self::config()->auto_clean) {
+            $time = date('Y-m-d', strtotime(self::config()->auto_clean_threshold));
+            $sql = "DELETE FROM \"CronTaskResult\" WHERE \"Created\" < '$time'";
+            DB::query($sql);
+        }
     }
 
     /**

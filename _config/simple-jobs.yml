@@ -10,3 +10,5 @@ SimpleJobsController:
   store_results: true
   time_limit: 300
   disabled_tasks: []
+  auto_clean: true
+  auto_clean_threshold: '-30 days'
