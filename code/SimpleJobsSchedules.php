@@ -1,4 +1,5 @@
 <?php
+namespace LeKoala\SimpleJobs;
 
 /**
  * A common set of schedule

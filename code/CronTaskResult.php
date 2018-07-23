@@ -1,4 +1,7 @@
 <?php
+namespace LeKoala\SimpleJobs;
+
+use SilverStripe\ORM\DataObject;
 
 /**
  * Store the result of a cron task
@@ -11,13 +14,14 @@
  */
 class CronTaskResult extends DataObject
 {
+    private static $table_name = 'CronTaskResult';
     private static $db = array(
         'TaskClass' => 'Varchar(255)',
         'Result' => 'Text',
         'Failed' => 'Boolean',
         'ForcedRun' => 'Boolean',
-        'StartDate' => 'SS_Datetime',
-        'EndDate' => 'SS_Datetime',
+        'StartDate' => 'Datetime',
+        'EndDate' => 'Datetime',
         'TimeToExecute' => 'Int',
     );
     private static $default_sort = 'Created DESC';

@@ -1,4 +1,17 @@
 <?php
+namespace LeKoala\SimpleJobs;
+
+use DateTime;
+use Cron\CronExpression;
+use SilverStripe\Core\Convert;
+use SilverStripe\Core\ClassInfo;
+use SilverStripe\Control\Director;
+use SilverStripe\Control\Controller;
+use SilverStripe\Security\Permission;
+use SilverStripe\CronTask\CronTaskStatus;
+use SilverStripe\ORM\FieldType\DBDatetime;
+use SilverStripe\CronTask\Interfaces\CronTask;
+use SilverStripe\Control\HTTPResponse_Exception;
 
 /**
  * A controller that triggers the jobs from an http request
@@ -72,7 +85,7 @@ class SimpleJobsController extends Controller
             return "View logs is only available in dev mode or for admins";
         }
 
-        $limit = (int) $this->getRequest()->param('ID');
+        $limit = (int)$this->getRequest()->param('ID');
         if (!$limit) {
             $limit = 10;
         }
@@ -116,7 +129,7 @@ class SimpleJobsController extends Controller
 
         $this->basicAuth();
 
-        $tasks = ClassInfo::implementorsOf('CronTask');
+        $tasks = $this->allTasks();
         if (empty($tasks)) {
             return "There are no implementators of CronTask to run";
         }
@@ -151,7 +164,7 @@ class SimpleJobsController extends Controller
         $status = CronTaskStatus::get_status(get_class($task));
 
         // If the cron is due immediately, then run it
-        $now = new DateTime(SS_Datetime::now()->getValue());
+        $now = new DateTime(DBDatetime::now()->getValue());
         if ($cron->isDue($now)) {
             if (empty($status) || empty($status->LastRun)) {
                 return true;
@@ -179,7 +192,7 @@ class SimpleJobsController extends Controller
      */
     protected function runTask(CronTask $task, $forceRun = false)
     {
-        $cron = Cron\CronExpression::factory($task->getSchedule());
+        $cron = CronExpression::factory($task->getSchedule());
         $isDue = $this->isTaskDue($task, $cron);
         $willRun = $isDue || $forceRun;
         // Update status of this task prior to execution in case of interruption
@@ -243,14 +256,14 @@ class SimpleJobsController extends Controller
 
     protected function allTasks()
     {
-        return ClassInfo::implementorsOf('CronTask');
+        return ClassInfo::implementorsOf(CronTask::class);
     }
 
     /**
      * Enable BasicAuth in a similar fashion as BasicAuth class
      *
      * @return boolean
-     * @throws SS_HTTPResponse_Exception
+     * @throws HTTPResponse_Exception
      */
     protected function basicAuth()
     {
@@ -299,7 +312,7 @@ class SimpleJobsController extends Controller
             }
 
             // Exception is caught by RequestHandler->handleRequest() and will halt further execution
-            $e = new SS_HTTPResponse_Exception(null, 401);
+            $e = new HTTPResponse_Exception(null, 401);
             $e->setResponse($response);
             throw $e;
         }

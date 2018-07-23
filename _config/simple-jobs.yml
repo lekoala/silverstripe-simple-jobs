@@ -1,10 +1,10 @@
 ---
 Name: simple-jobs
 ---
-Director:
+SilverStripe\Control\Director:
   rules:
-    'simple-jobs//$Action/$ID/$Name' : 'SimpleJobsController'
-SimpleJobsController:
+    'simple-jobs//$Action/$ID/$Name' : 'LeKoala\SimpleJobs\SimpleJobsController'
+LeKoala\SimpleJobs\SimpleJobsController:
   username: ''
   password: ''
   store_results: true
