@@ -110,7 +110,7 @@ them at the same time (because it could cause a timeout).
 
 Compatibility
 ==================
-Tested with 3.x
+Tested with 4.1
 
 Maintainer
 ==================
