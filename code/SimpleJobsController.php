@@ -14,6 +14,7 @@ use SilverStripe\CronTask\CronTaskStatus;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\CronTask\Interfaces\CronTask;
 use SilverStripe\Control\HTTPResponse_Exception;
+use SilverStripe\Control\HTTPResponse;
 
 /**
  * A controller that triggers the jobs from an http request
@@ -257,6 +258,9 @@ class SimpleJobsController extends Controller
         echo $message . '<br />' . PHP_EOL;
     }
 
+    /**
+     * @return array
+     */
     protected function allTasks()
     {
         return ClassInfo::implementorsOf(CronTask::class);
@@ -305,7 +309,7 @@ class SimpleJobsController extends Controller
 
         if (!$authSuccess) {
             $realm = "Enter your credentials";
-            $response = new SS_HTTPResponse(null, 401);
+            $response = new HTTPResponse(null, 401);
             $response->addHeader('WWW-Authenticate', "Basic realm=\"$realm\"");
 
             if (isset($_SERVER['PHP_AUTH_USER'])) {
