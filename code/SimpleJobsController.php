@@ -3,9 +3,11 @@ namespace LeKoala\SimpleJobs;
 
 use DateTime;
 use Cron\CronExpression;
+use SilverStripe\ORM\DB;
 use SilverStripe\Core\Convert;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Control\Director;
+use SilverStripe\Core\Environment;
 use SilverStripe\Control\Controller;
 use SilverStripe\Security\Permission;
 use SilverStripe\CronTask\CronTaskStatus;
@@ -20,6 +22,7 @@ use SilverStripe\Control\HTTPResponse_Exception;
  */
 class SimpleJobsController extends Controller
 {
+    private static $url_segment = 'simple-jobs';
     private static $url_handlers = array(
         'simple-jobs/$Action/$ID/$OtherID' => 'handleAction',
     );
@@ -125,7 +128,7 @@ class SimpleJobsController extends Controller
     public function trigger()
     {
         // Never set a limit longer than the frequency at which this endpoint is called
-        increase_time_limit_to(self::config()->time_limit);
+        Environment::increaseTimeLimitTo(self::config()->time_limit);
 
         $this->basicAuth();
 
