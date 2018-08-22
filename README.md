@@ -95,11 +95,11 @@ provides sane defaults for most common schedules.
         }
 
         /**
-         *
-         * @return void
+         * @return bool
          */
         public function process() {
             echo 'hello';
+            return true; // save as successful
         }
     }
 
