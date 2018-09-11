@@ -21,7 +21,7 @@ namespace LeKoala\SimpleJobs;
 class SimpleJobsSchedules
 {
 
-    // Some predefined constants
+    // Some predefined constants or use custom methods below
     const EVERY_TIME = "* * * * *";
     const EVERY_FIVE_MIN = "*/5 * * * *";
     const EVERY_HOUR = "0 * * * *"; // at 1, 2, 3...
@@ -30,12 +30,11 @@ class SimpleJobsSchedules
     const EVERY_MONTH = "0 3 1 * *"; // first day of each month
     const EVERY_YEAR = "0 3 1 1 *"; // every first january
 
-    // Or use these custom methods
-
     /**
+     * Every day on hour H
      *
-     * @param type $h
-     * @return type
+     * @param int $h
+     * @return string
      */
     public static function everyDay($h = 3)
     {
