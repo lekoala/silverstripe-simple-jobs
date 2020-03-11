@@ -1,2 +1,2 @@
 <?php
-define('SIMPLE_JOBS_DIR',__DIR__);
+define('SIMPLE_JOBS_DIR', __DIR__);

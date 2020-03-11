@@ -1,7 +1,9 @@
 <?php
+
 namespace LeKoala\SimpleJobs;
 
 use DateTime;
+use Exception;
 use Cron\CronExpression;
 use SilverStripe\ORM\DB;
 use SilverStripe\Core\Convert;
@@ -10,11 +12,11 @@ use SilverStripe\Control\Director;
 use SilverStripe\Core\Environment;
 use SilverStripe\Control\Controller;
 use SilverStripe\Security\Permission;
+use SilverStripe\Control\HTTPResponse;
 use SilverStripe\CronTask\CronTaskStatus;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\CronTask\Interfaces\CronTask;
 use SilverStripe\Control\HTTPResponse_Exception;
-use SilverStripe\Control\HTTPResponse;
 
 /**
  * A controller that triggers the jobs from an http request
@@ -89,7 +91,7 @@ class SimpleJobsController extends Controller
             return "View logs is only available in dev mode or for admins";
         }
 
-        $limit = (int)$this->getRequest()->param('ID');
+        $limit = (int) $this->getRequest()->param('ID');
         if (!$limit) {
             $limit = 10;
         }
@@ -293,8 +295,7 @@ class SimpleJobsController extends Controller
 
         $matches = array();
 
-        if ($authHeader &&
-            preg_match('/Basic\s+(.*)$/i', $authHeader, $matches)) {
+        if ($authHeader && preg_match('/Basic\s+(.*)$/i', $authHeader, $matches)) {
             list($name, $password) = explode(':', base64_decode($matches[1]));
             $_SERVER['PHP_AUTH_USER'] = strip_tags($name);
             $_SERVER['PHP_AUTH_PW'] = strip_tags($password);
