@@ -49,7 +49,7 @@ class CronTaskResult extends DataObject
 
     public static function PrettifyResult($result)
     {
-        if (!$result) {
+        if ($result === false) {
             $result = 'Task failed';
         }
         if (is_object($result)) {
