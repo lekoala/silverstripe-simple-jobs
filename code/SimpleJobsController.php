@@ -32,6 +32,7 @@ class SimpleJobsController extends Controller
     private static $allowed_actions = array(
         'trigger',
         'trigger_manual',
+        'trigger_next_task',
         'viewlogs',
     );
 
@@ -52,7 +53,6 @@ class SimpleJobsController extends Controller
         if (!Director::isDev()) {
             return 'Listing tasks is only available in dev mode';
         }
-
 
         $tasks = $this->allTasks();
         if (empty($tasks)) {
@@ -77,6 +77,9 @@ class SimpleJobsController extends Controller
             $this->output('<a href="' . $link . '">' . $taskName . '</a>');
             $this->output('<a href="' . $link . '?force=1">' . $taskName . ' (forced run)</a>');
         }
+
+        $this->output('');
+        $this->output('<a href="/simple-jobs/trigger_next_task">Trigger next simple task</a>');
 
         if (self::config()->store_results) {
             $this->output('');
@@ -128,6 +131,20 @@ class SimpleJobsController extends Controller
         $this->runTask($task, true);
     }
 
+    public function trigger_next_task()
+    {
+        if (!Director::isDev() && !Permission::check('ADMIN')) {
+            return 'You must be logged as an admin or in dev mode';
+        }
+
+        $simpleTask = SimpleTask::getNextTaskToRun();
+        if ($simpleTask) {
+            return $simpleTask->process();
+        } else {
+            return 'No task';
+        }
+    }
+
     public function trigger()
     {
         // Never set a limit longer than the frequency at which this endpoint is called
@@ -150,10 +167,24 @@ class SimpleJobsController extends Controller
             $this->runTask($task);
         }
 
+        // Do we have a simple task to run ?
+        // TODO: instead of running one task, we could check how much time we have
+        $simpleTask = SimpleTask::getNextTaskToRun();
+        if ($simpleTask) {
+            $simpleTask->process();
+        }
+
         // Avoid the table to be full of stuff
-        if (self::config()->store_results && self::config()->auto_clean) {
+        if (self::config()->auto_clean) {
             $time = date('Y-m-d', strtotime(self::config()->auto_clean_threshold));
-            $sql = "DELETE FROM \"CronTaskResult\" WHERE \"Created\" < '$time'";
+
+            // Clear old results
+            if (self::config()->store_results) {
+                $sql = "DELETE FROM \"CronTaskResult\" WHERE \"Created\" < '$time'";
+                DB::query($sql);
+            }
+            // Clear old jobs
+            $sql = "DELETE FROM \"SimpleTask\" WHERE \"Created\" < '$time'";
             DB::query($sql);
         }
     }
@@ -295,7 +326,8 @@ class SimpleJobsController extends Controller
 
         $matches = array();
 
-        if ($authHeader && preg_match('/Basic\s+(.*)$/i', $authHeader, $matches)) {
+        $hasBasicHeaders =  $authHeader && preg_match('/Basic\s+(.*)$/i', $authHeader, $matches);
+        if ($hasBasicHeaders) {
             list($name, $password) = explode(':', base64_decode($matches[1]));
             $_SERVER['PHP_AUTH_USER'] = strip_tags($name);
             $_SERVER['PHP_AUTH_PW'] = strip_tags($password);
