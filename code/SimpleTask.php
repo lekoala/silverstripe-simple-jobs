@@ -6,6 +6,7 @@ use Exception;
 use SilverStripe\ORM\DB;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\Security\Member;
 
 /**
  * A simple class to schedule function calls
@@ -29,6 +30,7 @@ class SimpleTask extends DataObject
 {
     private static $table_name = 'SimpleTask'; // When using namespace, specify table name
     private static $db = [
+        'Name' => 'Varchar(191)',
         'Task' => 'Text',
         'Processed' => 'Boolean',
         'Failed' => 'Boolean',
@@ -38,6 +40,9 @@ class SimpleTask extends DataObject
         'SuccessCalls' => 'Int',
         'ErrorCalls' => 'Int',
         "RunDate" => "Datetime",
+    ];
+    private static $has_one = [
+        'Owner' => Member::class,
     ];
     private static $default_sort = "RunDate DESC";
 
@@ -93,6 +98,15 @@ class SimpleTask extends DataObject
     public function addToTask(DataObject $class, $method, $params = [])
     {
         $details = $this->getTaskDetails();
+
+        // If no name is set, assume the first method call to be the task
+        if (!$this->Name) {
+            $this->Name = $method;
+        }
+        // If no owner is set, assume that the member is the owner
+        if (!$this->OwnerID && $class instanceof Member) {
+            $this->OwnerID = $class->ID;
+        }
 
         // Task details contain one entry per thing to do in a task
         // A task can do multiple calls

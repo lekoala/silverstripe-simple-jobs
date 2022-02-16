@@ -152,40 +152,52 @@ class SimpleJobsController extends Controller
 
         $this->basicAuth();
 
+        // We can set a type (cron|task). If empty, we run both cron and task
+        $type = $this->getRequest()->param("ID");
+        if ($type && !in_array($type, ['cron', 'task'])) {
+            throw new Exception("Only 'cron' and 'task' are valid parameters");
+        }
+
         $tasks = $this->allTasks();
         if (empty($tasks)) {
             return "There are no implementators of CronTask to run";
         }
-        $disabled = self::config()->disabled_tasks;
-        foreach ($tasks as $subclass) {
-            if (Director::isLive() && in_array($subclass, $disabled)) {
-                $this->output("Task $subclass is disabled");
-                continue;
+        if (!$type || $type == "cron") {
+            $disabled = self::config()->disabled_tasks;
+            foreach ($tasks as $subclass) {
+                if (Director::isLive() && in_array($subclass, $disabled)) {
+                    $this->output("Task $subclass is disabled");
+                    continue;
+                }
+                // Check if disabled
+                $task = new $subclass();
+                $this->runTask($task);
             }
-            // Check if disabled
-            $task = new $subclass();
-            $this->runTask($task);
+            // Avoid the table to be full of stuff
+            if (self::config()->auto_clean) {
+                $time = date('Y-m-d', strtotime(self::config()->auto_clean_threshold));
+                if (self::config()->store_results) {
+                    $sql = "DELETE FROM \"CronTaskResult\" WHERE \"Created\" < '$time'";
+                    DB::query($sql);
+                }
+            }
         }
 
         // Do we have a simple task to run ?
-        // TODO: instead of running one task, we could check how much time we have
-        $simpleTask = SimpleTask::getNextTaskToRun();
-        if ($simpleTask) {
-            $simpleTask->process();
-        }
-
-        // Avoid the table to be full of stuff
-        if (self::config()->auto_clean) {
-            $time = date('Y-m-d', strtotime(self::config()->auto_clean_threshold));
-
-            // Clear old results
-            if (self::config()->store_results) {
-                $sql = "DELETE FROM \"CronTaskResult\" WHERE \"Created\" < '$time'";
+        if (!$type || $type == "task") {
+            $simpleTask = SimpleTask::getNextTaskToRun();
+            if ($simpleTask) {
+                $simpleTask->process();
+                $this->output("Processed task {$simpleTask->ID}");
+            } else {
+                $this->output("No task");
+            }
+            // Avoid the table to be full of stuff
+            if (self::config()->auto_clean) {
+                $time = date('Y-m-d', strtotime(self::config()->auto_clean_threshold));
+                $sql = "DELETE FROM \"SimpleTask\" WHERE \"Created\" < '$time'";
                 DB::query($sql);
             }
-            // Clear old jobs
-            $sql = "DELETE FROM \"SimpleTask\" WHERE \"Created\" < '$time'";
-            DB::query($sql);
         }
     }
 
