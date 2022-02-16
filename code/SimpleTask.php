@@ -8,6 +8,7 @@
  * We only run one task each call to avoid excessive usages
  * Expect some delays if you have many tasks!
  *
+ * @property string $Name
  * @property string $Task
  * @property boolean $Processed
  * @property boolean $Failed
@@ -17,10 +18,12 @@
  * @property int $SuccessCalls
  * @property int $ErrorCalls
  * @property string $RunDate
+ * @property int $OwnerID
  */
 class SimpleTask extends DataObject
 {
     private static $db = [
+        'Name' => 'Varchar(191)',
         'Task' => 'Text',
         'Processed' => 'Boolean',
         'Failed' => 'Boolean',
@@ -30,6 +33,9 @@ class SimpleTask extends DataObject
         'SuccessCalls' => 'Int',
         'ErrorCalls' => 'Int',
         "RunDate" => "Datetime",
+    ];
+    private static $has_one = [
+        'Owner' => Member::class,
     ];
     private static $default_sort = "RunDate DESC";
 
@@ -84,12 +90,22 @@ class SimpleTask extends DataObject
      */
     public function addToTask(DataObject $class, $method, $params = [])
     {
+        $dataClass = get_class($class);
         $details = $this->getTaskDetails();
+
+        // If no name is set, assume the first method call to be the task
+        if (!$this->Name) {
+            $this->Name = $method;
+        }
+        // If no owner is set, assume that the member is the owner
+        if (!$this->OwnerID && $class instanceof Member) {
+            $this->OwnerID = $class->ID;
+        }
 
         // Task details contain one entry per thing to do in a task
         // A task can do multiple calls
         $details[] = [
-            'class' => get_class($class),
+            'class' => $dataClass,
             'id' => $class->ID,
             'function' => $method,
             'parameters' => $params

@@ -134,6 +134,7 @@ class SimpleJobsController extends Controller
 
         $this->basicAuth();
 
+        // We can set a type (cron|task). If empty, we run both cron and task
         $type = $this->getRequest()->param("ID");
         if ($type && !in_array($type, ['cron', 'task'])) {
             throw new Exception("Only 'cron' and 'task' are valid parameters");
