@@ -6,6 +6,7 @@ use DateTime;
 use Exception;
 use Cron\CronExpression;
 use SilverStripe\ORM\DB;
+use Psr\Log\LoggerInterface;
 use SilverStripe\Core\Convert;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Control\Director;
@@ -13,6 +14,7 @@ use SilverStripe\Core\Environment;
 use SilverStripe\Control\Controller;
 use SilverStripe\Security\Permission;
 use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\CronTask\CronTaskStatus;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\CronTask\Interfaces\CronTask;
@@ -113,6 +115,11 @@ class SimpleJobsController extends Controller
         }
     }
 
+    /**
+     * This is a dedicated endpoint to manually run a specific job for admin
+     *
+     * @return void
+     */
     public function trigger_manual()
     {
         if (!Permission::check('ADMIN')) {
@@ -131,6 +138,11 @@ class SimpleJobsController extends Controller
         $this->runTask($task, true);
     }
 
+    /**
+     * This is a dedicated endpoint to force run the next task
+     *
+     * @return void
+     */
     public function trigger_next_task()
     {
         if (!Director::isDev() && !Permission::check('ADMIN')) {
@@ -145,6 +157,16 @@ class SimpleJobsController extends Controller
         }
     }
 
+    /**
+     * This is the endpoint that must be called by your monitoring system
+     * You can create two endpoints:
+     * - one with /trigger/cron for jobs
+     * - one with /trigger/task for tasks
+     *
+     * If unspecified, it will run all jobs and the next task
+     *
+     * @return void
+     */
     public function trigger()
     {
         // Never set a limit longer than the frequency at which this endpoint is called
@@ -157,6 +179,28 @@ class SimpleJobsController extends Controller
         if ($type && !in_array($type, ['cron', 'task'])) {
             throw new Exception("Only 'cron' and 'task' are valid parameters");
         }
+
+        // Create the lock file
+        $lockFile = Director::baseFolder() . "/.simple-jobs-lock";
+        if ($type) {
+            $lockFile .= "-" . $type;
+        }
+        $now = date('Y-m-d H:i:s');
+        if (is_file($lockFile)) {
+            // there is an uncleared lockfile ?
+            $this->getLogger()->error("Uncleared lock file");
+
+            // prevent running tasks < 5 min
+            $t = file_get_contents($lockFile);
+            $nowMinusFive = strtotime("-5 minutes", strtotime($now));
+            if (strtotime($t) > $nowMinusFive) {
+                die("Prevent running concurrent queues");
+            }
+
+            // clear anyway
+            unlink($lockFile);
+        }
+        file_put_contents($lockFile, $now);
 
         $tasks = $this->allTasks();
         if (empty($tasks)) {
@@ -370,5 +414,13 @@ class SimpleJobsController extends Controller
         }
 
         return $authSuccess;
+    }
+
+    /**
+     * @return LoggerInterface
+     */
+    public static function getLogger()
+    {
+        return Injector::inst()->get(LoggerInterface::class)->withName('SimpleJobsController');
     }
 }
