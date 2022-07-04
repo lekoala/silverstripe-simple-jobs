@@ -95,6 +95,11 @@ class SimpleJobsController extends Controller
         }
     }
 
+    /**
+     * This is a dedicated endpoint to manually run a specific job for admin
+     *
+     * @return void
+     */
     public function trigger_manual()
     {
         if (!Permission::check('ADMIN')) {
@@ -113,6 +118,11 @@ class SimpleJobsController extends Controller
         $this->runTask($task, true);
     }
 
+    /**
+     * This is a dedicated endpoint to force run the next task
+     *
+     * @return void
+     */
     public function trigger_next_task()
     {
         if (!Director::isDev() && !Permission::check('ADMIN')) {
@@ -127,6 +137,16 @@ class SimpleJobsController extends Controller
         }
     }
 
+    /**
+     * This is the endpoint that must be called by your monitoring system
+     * You can create two endpoints:
+     * - one with /trigger/cron for jobs
+     * - one with /trigger/task for tasks
+     *
+     * If unspecified, it will run all jobs and the next task
+     *
+     * @return void
+     */
     public function trigger()
     {
         // Never set a limit longer than the frequency at which this endpoint is called
@@ -139,6 +159,25 @@ class SimpleJobsController extends Controller
         if ($type && !in_array($type, ['cron', 'task'])) {
             throw new Exception("Only 'cron' and 'task' are valid parameters");
         }
+
+        // Create the lock file
+        $lockFile = Director::baseFolder() . "/.simple-jobs-lock";
+        $now = date('Y-m-d H:i:s');
+        if (is_file($lockFile)) {
+            // there is an uncleared lockfile ?
+            SS_Log::log("Uncleared lock file", SS_Log::ERR);
+
+            // prevent running tasks < 5 min
+            $t = file_get_contents($lockFile);
+            $nowMinusFive = strtotime("-5 minutes", strtotime($now));
+            if (strtotime($t) > $nowMinusFive) {
+                die("Prevent running concurrent queues");
+            }
+
+            // clear anyway
+            unlink($lockFile);
+        }
+        file_put_contents($lockFile, $now);
 
         $tasks = ClassInfo::implementorsOf('CronTask');
         if (!$tasks) {
@@ -182,6 +221,9 @@ class SimpleJobsController extends Controller
                 DB::query($sql);
             }
         }
+
+        // Clear the lock file
+        unlink($lockFile);
     }
 
     /**
