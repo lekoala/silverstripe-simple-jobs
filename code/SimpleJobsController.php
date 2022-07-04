@@ -162,6 +162,9 @@ class SimpleJobsController extends Controller
 
         // Create the lock file
         $lockFile = Director::baseFolder() . "/.simple-jobs-lock";
+        if ($type) {
+            $lockFile .= "-" . $type;
+        }
         $now = date('Y-m-d H:i:s');
         if (is_file($lockFile)) {
             // there is an uncleared lockfile ?
