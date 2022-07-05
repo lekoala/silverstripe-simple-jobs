@@ -243,6 +243,9 @@ class SimpleJobsController extends Controller
                 DB::query($sql);
             }
         }
+
+        // Clear lock file
+        unlink($lockFile);
     }
 
     /**
