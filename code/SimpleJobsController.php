@@ -118,7 +118,7 @@ class SimpleJobsController extends Controller
     /**
      * This is a dedicated endpoint to manually run a specific job for admin
      *
-     * @return void
+     * @return string|void
      */
     public function trigger_manual()
     {
@@ -141,7 +141,7 @@ class SimpleJobsController extends Controller
     /**
      * This is a dedicated endpoint to force run the next task
      *
-     * @return void
+     * @return string|void
      */
     public function trigger_next_task()
     {

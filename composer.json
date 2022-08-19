@@ -17,9 +17,21 @@
         }
     ],
     "require": {
-        "php": ">=7.2",
+        "php": "^7.4 || ^8.0",
         "silverstripe/framework": "^4.4",
         "silverstripe/crontask": "^2.1"
+    },
+    "require-dev": {
+        "silverstripe/recipe-plugin": "^1",
+        "silverstripe/recipe-cms": "^4.4",
+        "phpunit/phpunit": "^9.5",
+        "squizlabs/php_codesniffer": "^3.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "LeKoala\\SimpleJobs\\": "src/",
+            "LeKoala\\SimpleJobs\\Test\\": "tests/"
+        }
     },
     "extra": {
         "installer-name": "simple-jobs"

@@ -24,14 +24,14 @@ class SimpleJobsTest extends SapphireTest
      */
     protected static $fixture_file = 'SimpleJobsTest.yml';
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $controller = Controller::curr();
         $controller->config()->set('url_segment', 'test_controller');
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         parent::tearDown();
     }
@@ -73,13 +73,13 @@ class SimpleJobsTest extends SapphireTest
 
         Security::setCurrentUser(null);
         $res = $ctrl->trigger_manual();
-        $this->assertContains("must be logged", $res);
+        $this->assertStringContainsString("must be logged", $res);
 
         $service = DefaultAdminService::singleton();
         $admin = $service->findOrCreateDefaultAdmin();
         Security::setCurrentUser($admin);
 
         $res = $ctrl->trigger_manual();
-        $this->assertNotContains("must be logged", $res);
+        $this->assertStringNotContainsString("must be logged", $res);
     }
 }
