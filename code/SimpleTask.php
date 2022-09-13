@@ -84,7 +84,7 @@ class SimpleTask extends DataObject
      */
     public static function getNextTaskToRun()
     {
-        return self::getTasksThatNeedToRun()->limit(1)->first();
+        return self::getTasksThatNeedToRun()->sort('RunDate ASC')->limit(1)->first();
     }
 
     /**
