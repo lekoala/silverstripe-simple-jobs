@@ -19,6 +19,7 @@ use SilverStripe\CronTask\CronTaskStatus;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\CronTask\Interfaces\CronTask;
 use SilverStripe\Control\HTTPResponse_Exception;
+use SilverStripe\Control\Middleware\HTTPCacheControlMiddleware;
 
 /**
  * A controller that triggers the jobs from an http request
@@ -51,6 +52,8 @@ class SimpleJobsController extends Controller
     public function index()
     {
         $this->basicAuth();
+
+        HTTPCacheControlMiddleware::singleton()->disableCache();
 
         if (!Director::isDev()) {
             return 'Listing tasks is only available in dev mode';
