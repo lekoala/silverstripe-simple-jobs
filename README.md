@@ -122,10 +122,20 @@ Keep in mind that the `SimpleJobsController` will only run one task each time (e
 or less depending on how you configured the module), so you may want to group in one
 simple task everything that is related to one specific process.
 
+# Cleaning sessions
+
+Since we have the session-manager, we need to [clean sessions](https://github.com/silverstripe/silverstripe-session-manager#garbage-collection).
+
+This module does it for you automatically daily. This can be disabled:
+
+```yml
+LeKoala\SimpleJobs\SimpleJobsDailyTask:
+    clean_sessions: false
+```
+
 # Compatibility
 
 Tested with 4.4+
-
 
 # Maintainer
 

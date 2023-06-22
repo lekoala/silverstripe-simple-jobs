@@ -12,3 +12,5 @@ LeKoala\SimpleJobs\SimpleJobsController:
   disabled_tasks: []
   auto_clean: true
   auto_clean_threshold: '-30 days'
+LeKoala\SimpleJobs\SimpleJobsDailyTask:
+  clean_sessions: true
