@@ -2,7 +2,6 @@
 
 namespace LeKoala\SimpleJobs\Test;
 
-use Exception;
 use SilverStripe\Security\Member;
 use LeKoala\SimpleJobs\SimpleTask;
 use SilverStripe\Dev\SapphireTest;
