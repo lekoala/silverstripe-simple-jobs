@@ -31,9 +31,7 @@ class SimpleJobsDailyTask implements CronTask
     public function process()
     {
         $config = static::config();
-
         $sessionGarbageCollector = \SilverStripe\SessionManager\Services\GarbageCollectionService::class;
-
         if (class_exists($sessionGarbageCollector) && $config->clean_sessions) {
             \SilverStripe\SessionManager\Services\GarbageCollectionService::singleton()->collect();
         }

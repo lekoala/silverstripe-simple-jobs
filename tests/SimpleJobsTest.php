@@ -2,6 +2,7 @@
 
 namespace LeKoala\SimpleJobs\Test;
 
+use LeKoala\SimpleJobs\CronJob;
 use SilverStripe\Security\Member;
 use LeKoala\SimpleJobs\SimpleTask;
 use SilverStripe\Dev\SapphireTest;
@@ -80,5 +81,16 @@ class SimpleJobsTest extends SapphireTest
 
         $res = $ctrl->trigger_manual();
         $this->assertStringNotContainsString("must be logged", $res);
+    }
+
+    public function testCanGenerateJobs()
+    {
+        CronJob::regenerateFromClasses();
+        $this->assertNotEquals(0, CronJob::get()->count());
+    }
+
+    public function testHasTasks()
+    {
+        $this->assertNotEmpty(CronJob::allTasks());
     }
 }

@@ -7,16 +7,35 @@ use SilverStripe\ORM\DataObject;
 /**
  * Store the result of a cron task
  *
- * @author Koala
  * @property string $TaskClass
  * @property string $Result
- * @property boolean $Failed
- * @property boolean $ForcedRun
+ * @property bool $Failed
+ * @property bool $ForcedRun
+ * @property string $StartDate
+ * @property string $EndDate
+ * @property int $TimeToExecute
  */
 class CronTaskResult extends DataObject
 {
+    /**
+     * @var string
+     */
+    private static $singular_name = 'Job Result';
+
+    /**
+     * @var string
+     */
+    private static $plural_name = 'Job Results';
+
+    /**
+     * @var string
+     */
     private static $table_name = 'CronTaskResult';
-    private static $db = array(
+
+    /**
+     * @var array<string, string>
+     */
+    private static $db = [
         'TaskClass' => 'Varchar(255)',
         'Result' => 'Text',
         'Failed' => 'Boolean',
@@ -24,10 +43,21 @@ class CronTaskResult extends DataObject
         'StartDate' => 'Datetime',
         'EndDate' => 'Datetime',
         'TimeToExecute' => 'Int',
-    );
+    ];
+
+    /**
+     * @var string
+     */
     private static $default_sort = 'Created DESC';
 
-    public function Status()
+    /**
+     * @var array<string, string>
+     */
+    private static $summary_fields = [
+        'Created' => 'Created', 'TaskClass' => 'Task Class', 'Failed' => 'Failed', 'TimeToExecute' => 'Time To Execute'
+    ];
+
+    public function Status(): string
     {
         $status = "Task {$this->TaskClass}";
         if ($this->Failed) {
@@ -42,12 +72,16 @@ class CronTaskResult extends DataObject
         return $status;
     }
 
-    public function PrettyResult()
+    public function PrettyResult(): string
     {
         return self::PrettifyResult($this->Result);
     }
 
-    public static function PrettifyResult($result)
+    /**
+     * @param string|object|array<mixed>|bool|null $result
+     * @return string
+     */
+    public static function PrettifyResult($result): string
     {
         if ($result === false) {
             $result = 'Task failed';
@@ -56,6 +90,8 @@ class CronTaskResult extends DataObject
             $result = print_r($result, true);
         } elseif (is_array($result)) {
             $result = json_encode($result);
+        } elseif ($result === null) {
+            $result = 'NULL';
         }
         return '<pre> ' . $result . '</pre>';
     }

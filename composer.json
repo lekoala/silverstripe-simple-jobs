@@ -17,14 +17,14 @@
         }
     ],
     "require": {
-        "php": "^7.4 || ^8",
-        "silverstripe/recipe-plugin": "^1 || ^2",
-        "silverstripe/vendor-plugin": "^1 || ^2",
-        "silverstripe/framework": "^4.4 || ^5",
-        "silverstripe/crontask": "^2.1 || ^3"
+        "php": "^8",
+        "silverstripe/recipe-plugin": "^2",
+        "silverstripe/vendor-plugin": "^2",
+        "silverstripe/framework": "^5",
+        "silverstripe/crontask": "^3"
     },
     "require-dev": {
-        "silverstripe/recipe-cms": "^4.4 || ^5",
+        "silverstripe/recipe-cms": "^5",
         "phpunit/phpunit": "^9.5",
         "squizlabs/php_codesniffer": "^3.5"
     },

@@ -16,19 +16,40 @@ use SilverStripe\Security\Member;
  * We only run one task each call to avoid excessive usages
  * Expect some delays if you have many tasks!
  *
+ * @property string $Name
  * @property string $Task
- * @property boolean $Processed
- * @property boolean $Failed
+ * @property bool $Processed
+ * @property bool $Failed
  * @property string $ErrorMessage
  * @property int $TimeToExecute
  * @property int $CallsCount
  * @property int $SuccessCalls
  * @property int $ErrorCalls
  * @property string $RunDate
+ * @property int $OwnerID
+ * @method \SilverStripe\Security\Member Owner()
  */
 class SimpleTask extends DataObject
 {
+
+    /**
+     * @var string
+     */
+    private static $singular_name = 'Scheduled Task';
+
+    /**
+     * @var string
+     */
+    private static $plural_name = 'Scheduled Tasks';
+
+    /**
+     * @var string
+     */
     private static $table_name = 'SimpleTask'; // When using namespace, specify table name
+
+    /**
+     * @var array<string, string>
+     */
     private static $db = [
         'Name' => 'Varchar(191)',
         'Task' => 'Text',
@@ -41,11 +62,29 @@ class SimpleTask extends DataObject
         'ErrorCalls' => 'Int',
         "RunDate" => "Datetime",
     ];
+
+    /**
+     * @var array<string, class-string>
+     */
     private static $has_one = [
         'Owner' => Member::class,
     ];
+
+    /**
+     * @var string
+     */
     private static $default_sort = "RunDate DESC";
 
+    /**
+     * @var array<string>
+     */
+    private static $summary_fields = [
+        'Created', 'Name', 'Processed', 'Failed', 'TimeToExecute'
+    ];
+
+    /**
+     * @return void
+     */
     protected function onBeforeWrite()
     {
         parent::onBeforeWrite();
@@ -60,12 +99,15 @@ class SimpleTask extends DataObject
 
     /**
      * An array of entries
-     * @return array
+     * @return array<string, mixed>
      */
     public function getTaskDetails()
     {
         if ($this->Task) {
-            return json_decode($this->Task, JSON_OBJECT_AS_ARRAY);
+            $result = json_decode($this->Task, true);
+            if ($result) {
+                return $result;
+            }
         }
         return [];
     }
@@ -84,7 +126,9 @@ class SimpleTask extends DataObject
      */
     public static function getNextTaskToRun()
     {
-        return self::getTasksThatNeedToRun()->sort('RunDate ASC')->limit(1)->first();
+        /** @var SimpleTask|null $task */
+        $task = self::getTasksThatNeedToRun()->sort('RunDate ASC')->limit(1)->first();
+        return $task;
     }
 
     /**
@@ -92,8 +136,8 @@ class SimpleTask extends DataObject
      *
      * @param DataObject $class
      * @param string $method
-     * @param array $params
-     * @return array
+     * @param array<mixed> $params
+     * @return array<mixed>
      */
     public function addToTask(DataObject $class, $method, $params = [])
     {
@@ -117,8 +161,10 @@ class SimpleTask extends DataObject
             'parameters' => $params
         ];
 
-        $this->Task = json_encode($details);
-
+        $json = json_encode($details);
+        if ($json) {
+            $this->Task = $json;
+        }
         return $details;
     }
 
@@ -148,14 +194,23 @@ class SimpleTask extends DataObject
             $details = $this->getTaskDetails();
 
             foreach ($details as $entry) {
-                $class = $entry['class'];
+                /** @var class-string $class */
+                $class = $entry['class'] ?? '';
+                /** @var int $id */
                 $id = $entry['id'];
+                /** @var string $function */
                 $function = $entry['function'];
+                /** @var array<mixed> $parameters */
                 $parameters = $entry['parameters'];
 
                 $inst = DataObject::get_by_id($class, $id);
+
+                $callable = [$inst, $function];
+                if (!is_callable($callable)) {
+                    throw new Exception("Not callable $function");
+                }
                 if ($inst) {
-                    $result = call_user_func_array([$inst, $function], $parameters);
+                    $result = call_user_func_array($callable, $parameters);
                     if ($result !== false) {
                         $success++;
                     } else {
@@ -163,8 +218,8 @@ class SimpleTask extends DataObject
                     }
                 }
             }
-            $this->Failed = null;
-            $this->ErrorMessage = null;
+            $this->Failed = false;
+            $this->ErrorMessage = '';
         } catch (Exception $ex) {
             $this->Failed = true;
             $this->ErrorMessage = $ex->getMessage();

@@ -135,7 +135,7 @@ LeKoala\SimpleJobs\SimpleJobsDailyTask:
 
 # Compatibility
 
-Tested with 4.4+
+Tested with 5+
 
 # Maintainer
 

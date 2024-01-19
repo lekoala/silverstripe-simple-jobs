@@ -24,21 +24,39 @@ use SilverStripe\Control\Middleware\HTTPCacheControlMiddleware;
 /**
  * A controller that triggers the jobs from an http request
  *
- * @author Koala
  */
 class SimpleJobsController extends Controller
 {
+    /**
+     * @var string
+     */
     private static $url_segment = 'simple-jobs';
-    private static $url_handlers = array(
+
+    /**
+     * @var array<string, string>
+     */
+    private static $url_handlers = [
         'simple-jobs/$Action/$ID/$OtherID' => 'handleAction',
-    );
-    private static $allowed_actions = array(
+    ];
+
+    /**
+     * @var array<string>
+     */
+    private static $allowed_actions = [
         'trigger',
         'trigger_manual',
         'trigger_next_task',
         'viewlogs',
-    );
+    ];
 
+    /**
+     * @var bool
+     */
+    protected $basicAuthEnabled = false;
+
+    /**
+     * @return void
+     */
     public function init()
     {
         // Avoid multiple auths
@@ -49,6 +67,9 @@ class SimpleJobsController extends Controller
         parent::init();
     }
 
+    /**
+     * @return string|HTTPResponse|void
+     */
     public function index()
     {
         $this->basicAuth();
@@ -59,7 +80,7 @@ class SimpleJobsController extends Controller
             return 'Listing tasks is only available in dev mode';
         }
 
-        $tasks = $this->allTasks();
+        $tasks = CronJob::allTasks();
         if (empty($tasks)) {
             return "There are no implementators of CronTask to run";
         }
@@ -67,9 +88,11 @@ class SimpleJobsController extends Controller
         $subclass = $this->getRequest()->param('ID');
         if ($subclass && in_array($subclass, $tasks)) {
             $forceRun = $this->getRequest()->getVar('force');
+
+            /** @var \SilverStripe\CronTask\Interfaces\CronTask $task */
             $task = new $subclass();
             $this->runTask($task, $forceRun);
-            return;
+            return '';
         }
 
         $disabled = self::config()->disabled_tasks;
@@ -93,6 +116,9 @@ class SimpleJobsController extends Controller
         }
     }
 
+    /**
+     * @return string|HTTPResponse|void
+     */
     public function viewlogs()
     {
         if (!Director::isDev() && !Permission::check('ADMIN')) {
@@ -137,6 +163,7 @@ class SimpleJobsController extends Controller
             return 'Invalid class name';
         }
 
+        /** @var \SilverStripe\CronTask\Interfaces\CronTask $task */
         $task = new $class();
         $this->runTask($task, true);
     }
@@ -154,10 +181,10 @@ class SimpleJobsController extends Controller
 
         $simpleTask = SimpleTask::getNextTaskToRun();
         if ($simpleTask) {
-            return $simpleTask->process();
-        } else {
-            return 'No task';
+            return $simpleTask->process() ? "ok" : "not ok";
         }
+
+        return 'No task';
     }
 
     /**
@@ -168,7 +195,7 @@ class SimpleJobsController extends Controller
      *
      * If unspecified, it will run all jobs and the next task
      *
-     * @return void
+     * @return void|string
      */
     public function trigger()
     {
@@ -195,9 +222,12 @@ class SimpleJobsController extends Controller
 
             // prevent running tasks < 5 min
             $t = file_get_contents($lockFile);
-            $nowMinusFive = strtotime("-5 minutes", strtotime($now));
-            if (strtotime($t) > $nowMinusFive) {
-                die("Prevent running concurrent queues");
+            $nowt = strtotime($now);
+            if ($t && $nowt) {
+                $nowMinusFive = strtotime("-5 minutes", $nowt);
+                if (strtotime($t) > $nowMinusFive) {
+                    die("Prevent running concurrent queues");
+                }
             }
 
             // clear anyway
@@ -205,7 +235,7 @@ class SimpleJobsController extends Controller
         }
         file_put_contents($lockFile, $now);
 
-        $tasks = $this->allTasks();
+        $tasks = CronJob::allTasks();
         if (empty($tasks)) {
             return "There are no implementators of CronTask to run";
         }
@@ -217,6 +247,7 @@ class SimpleJobsController extends Controller
                     continue;
                 }
                 // Check if disabled
+                /** @var \SilverStripe\CronTask\Interfaces\CronTask $task */
                 $task = new $subclass();
                 $this->runTask($task);
             }
@@ -256,10 +287,12 @@ class SimpleJobsController extends Controller
      *
      * @param CronTask $task
      * @param \Cron\CronExpression $cron
+     * @return bool
      */
     protected function isTaskDue(CronTask $task, \Cron\CronExpression $cron)
     {
         // Get last run status
+        /** @var CronTaskStatus|null $status */
         $status = CronTaskStatus::get_status(get_class($task));
 
         // If the cron is due immediately, then run it
@@ -288,10 +321,11 @@ class SimpleJobsController extends Controller
      *
      * @param CronTask $task
      * @param boolean $forceRun
+     * @return void
      */
     protected function runTask(CronTask $task, $forceRun = false)
     {
-        $cron = CronExpression::factory($task->getSchedule());
+        $cron = new CronExpression($task->getSchedule());
         $isDue = $this->isTaskDue($task, $cron);
         $willRun = $isDue || $forceRun;
         // Update status of this task prior to execution in case of interruption
@@ -329,7 +363,12 @@ class SimpleJobsController extends Controller
                     if (is_object($result)) {
                         $result = print_r($result, true);
                     } elseif (is_array($result)) {
-                        $result = json_encode($result);
+                        $json = json_encode($result);
+                        if ($json) {
+                            $result = $json;
+                        } else {
+                            $result = json_last_error_msg();
+                        }
                     }
                     $cronResult->Result = $result;
                 }
@@ -345,20 +384,17 @@ class SimpleJobsController extends Controller
         }
     }
 
+    /**
+     * @param string $message
+     * @param boolean $escape
+     * @return void
+     */
     protected function output($message, $escape = false)
     {
         if ($escape) {
-            $message = Convert::raw2xml($message);
+            $message = htmlspecialchars($message ?? '', ENT_QUOTES, 'UTF-8');
         }
         echo $message . '<br />' . PHP_EOL;
-    }
-
-    /**
-     * @return array
-     */
-    protected function allTasks()
-    {
-        return ClassInfo::implementorsOf(CronTask::class);
     }
 
     /**
