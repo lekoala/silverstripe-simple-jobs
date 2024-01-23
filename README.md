@@ -1,5 +1,9 @@
 # SilverStripe Simple Jobs
 
+![Build Status](https://github.com/lekoala/silverstripe-simple-jobs/actions/workflows/ci.yml/badge.svg)
+[![scrutinizer](https://scrutinizer-ci.com/g/lekoala/silverstripe-simple-jobs/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/lekoala/silverstripe-simple-jobs/)
+[![Code coverage](https://codecov.io/gh/lekoala/silverstripe-simple-jobs/branch/master/graph/badge.svg)](https://codecov.io/gh/lekoala/silverstripe-simple-jobs)
+
 An alternative to run cron jobs that uses simple HTTP requests.
 
 This module require [SilverStripe CronTask](https://github.com/silverstripe-labs/silverstripe-crontask).
