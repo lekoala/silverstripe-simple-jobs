@@ -27,7 +27,7 @@ As an added bonus, will you monitor if your webserver is responding which is alw
 ## Using your own requests
 
 Don't like using a service like UptimeRobot ? Feel free to setup your own http requets using
-[Windows Scheduled Tasks](<https://technet.microsoft.com/en-us/library/cc748993(v=ws.11).aspx>) or another server using cron.
+[Windows Scheduled Tasks](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc748993(v=ws.11)) or another server using cron.
 
 For instance
 
