@@ -85,34 +85,31 @@ class SimpleJobsController extends Controller
             return "There are no implementators of CronTask to run";
         }
 
-        $subclass = $this->getRequest()->param('ID');
-        if ($subclass && in_array($subclass, $tasks)) {
-            $forceRun = $this->getRequest()->getVar('force');
+        $segment = self::$url_segment;
 
-            /** @var \SilverStripe\CronTask\Interfaces\CronTask $task */
-            $task = new $subclass();
-            $this->runTask($task, $forceRun);
-            return '';
-        }
-
-        $disabled = self::config()->disabled_tasks;
         foreach ($tasks as $task) {
             $taskName = $task;
-            if ($disabled && in_array($taskName, $disabled)) {
+
+            $job = CronJob::getByTaskClass($task);
+            if ($job && $job->IsDisabled()) {
                 $taskName .= ' - disabled';
             }
-            $link = "/simple-jobs/index/" . $task;
+
+            $taskUrl = str_replace('\\', '-', $task);
+
+            $link = "/$segment/trigger_manual/" . $taskUrl;
+            $forceLink = "/$segment/trigger_manual/" . $taskUrl;
             $this->output('<a href="' . $link . '">' . $taskName . '</a>');
-            $this->output('<a href="' . $link . '?force=1">' . $taskName . ' (forced run)</a>');
+            $this->output('<a href="' . $forceLink . '?force=1">' . $taskName . ' (forced run)</a>');
         }
 
         $this->output('');
-        $this->output('<a href="/simple-jobs/trigger_next_task">Trigger next simple task</a>');
+        $this->output('<a href="/' . $segment . '/trigger_next_task">Trigger next simple task</a>');
 
         if (self::config()->store_results) {
             $this->output('');
-            $this->output('<a href="/simple-jobs/viewlogs">View 10 most recent log entries</a>');
-            $this->output('<a href="/simple-jobs/viewlogs/100">View 100 most recent log entries</a>');
+            $this->output('<a href="/' . $segment . '/viewlogs">View 10 most recent log entries</a>');
+            $this->output('<a href="/' . $segment . '/viewlogs/100">View 100 most recent log entries</a>');
         }
     }
 
@@ -159,13 +156,21 @@ class SimpleJobsController extends Controller
         if (!$class) {
             return 'You must specify a class';
         }
+        $class = str_replace('-', '\\', $class);
         if (!class_exists($class)) {
             return 'Invalid class name';
         }
 
+        $forceRun = $this->getRequest()->getVar('force') ? true : false;
+
+        $cronJob = CronJob::getByTaskClass($class);
+        if ($cronJob && $cronJob->IsDisabled() && !$forceRun) {
+            return 'Task is disabled, use forced run';
+        }
+
         /** @var \SilverStripe\CronTask\Interfaces\CronTask $task */
         $task = new $class();
-        $this->runTask($task, true);
+        $this->runTask($task, $forceRun);
     }
 
     /**
@@ -240,17 +245,17 @@ class SimpleJobsController extends Controller
             return "There are no implementators of CronTask to run";
         }
         if (!$type || $type == "cron") {
-            $disabled = self::config()->disabled_tasks;
             foreach ($tasks as $subclass) {
-                if (Director::isLive() && in_array($subclass, $disabled)) {
+                $cronJob = CronJob::getByTaskClass($subclass);
+                if ($cronJob && $cronJob->IsDisabled()) {
                     $this->output("Task $subclass is disabled");
                     continue;
                 }
-                // Check if disabled
                 /** @var \SilverStripe\CronTask\Interfaces\CronTask $task */
                 $task = new $subclass();
                 $this->runTask($task);
             }
+
             // Avoid the table to be full of stuff
             if (self::config()->auto_clean) {
                 $time = date('Y-m-d', strtotime(self::config()->auto_clean_threshold));
@@ -342,6 +347,8 @@ class SimpleJobsController extends Controller
             // Handle exceptions for tasks
             $error = null;
             try {
+                // We override docblock return type because we allow a result
+                /** @var mixed $result */
                 $result = $task->process();
                 $this->output(CronTaskResult::PrettifyResult($result));
             } catch (Exception $ex) {
@@ -385,7 +392,7 @@ class SimpleJobsController extends Controller
     }
 
     /**
-     * @param string $message
+     * @param string|null $message
      * @param boolean $escape
      * @return void
      */

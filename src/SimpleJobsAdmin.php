@@ -34,10 +34,9 @@ class SimpleJobsAdmin extends ModelAdmin
     private static $menu_title = 'Jobs';
 
     /**
-     * @link https://boxicons.com/
      * @var string
      */
-    private static $menu_icon_class = "bx bx-task";
+    private static $menu_icon_class = "font-icon-checklist";
 
     /**
      * @var boolean
@@ -57,7 +56,6 @@ class SimpleJobsAdmin extends ModelAdmin
         if ($this->modelClass == CronJob::class) {
             CronJob::regenerateFromClasses(Director::isDev());
         }
-
         $list = parent::getList();
         return $list;
     }
@@ -66,7 +64,6 @@ class SimpleJobsAdmin extends ModelAdmin
     {
         $config = parent::getGridFieldConfig();
         $config->removeComponentsByType(GridFieldAddNewButton::class);
-
         return $config;
     }
 }

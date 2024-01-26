@@ -36,7 +36,7 @@ class SimpleJobsTest extends SapphireTest
         parent::tearDown();
     }
 
-    public function testSimpleTask()
+    public function testSimpleTask(): void
     {
         $task = new SimpleTask;
         $inst = Member::get()->first();
@@ -67,7 +67,7 @@ class SimpleJobsTest extends SapphireTest
         $this->assertEquals(0, $count);
     }
 
-    public function testController()
+    public function testController(): void
     {
         $ctrl = new SimpleJobsController();
 
@@ -83,13 +83,13 @@ class SimpleJobsTest extends SapphireTest
         $this->assertStringNotContainsString("must be logged", $res);
     }
 
-    public function testCanGenerateJobs()
+    public function testCanGenerateJobs(): void
     {
         CronJob::regenerateFromClasses();
         $this->assertNotEquals(0, CronJob::get()->count());
     }
 
-    public function testHasTasks()
+    public function testHasTasks(): void
     {
         $this->assertNotEmpty(CronJob::allTasks());
     }
