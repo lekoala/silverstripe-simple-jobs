@@ -18,6 +18,7 @@ use SilverStripe\Forms\GridField\GridFieldConfig_RecordViewer;
  * Class \LeKoala\SimpleJobs\CronJob
  *
  * @property string $TaskClass
+ * @property string $Title
  * @property string $Category
  * @property string $Description
  * @property bool $Disabled
