@@ -42,10 +42,7 @@
         }
     },
     "extra": {
-        "installer-name": "simple-jobs",
-        "expose": [
-            "images"
-        ]
+        "installer-name": "simple-jobs"
     },
     "support": {
         "issues": "https://github.com/lekoala/silverstripe-simple-jobs/issues"
