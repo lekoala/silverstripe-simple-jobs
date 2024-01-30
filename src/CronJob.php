@@ -4,6 +4,7 @@ namespace LeKoala\SimpleJobs;
 
 use Exception;
 use Cron\CronExpression;
+use LeKoala\CmsActions\CustomAction;
 use SilverStripe\ORM\DataList;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
@@ -13,6 +14,7 @@ use SilverStripe\Security\Member;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\CronTask\Interfaces\CronTask;
 use SilverStripe\Forms\GridField\GridFieldConfig_RecordViewer;
+use SilverStripe\Security\Permission;
 
 /**
  * Class \LeKoala\SimpleJobs\CronJob
@@ -82,6 +84,34 @@ class CronJob extends DataObject
     public static function allTasks(): array
     {
         return ClassInfo::implementorsOf(CronTask::class);
+    }
+
+    public function triggerManually(): string
+    {
+        $inst = $this->TaskInstance();
+        /** @var void|null|string|bool $result */
+        $result = $inst->process();
+        if ($result !== null) {
+            if ($result === false) {
+                return 'Task failed';
+            }
+            if (is_string($result)) {
+                return $result;
+            }
+        }
+        return "Task has been triggered";
+    }
+
+    public function getCMSActions()
+    {
+        $actions = parent::getCMSActions();
+        if (class_exists(CustomAction::class) && Permission::check('ADMIN')) {
+            $triggerManually = new CustomAction('triggerManually', 'Trigger manually');
+            $triggerManually->setConfirmation("Are you sure you want to trigger the task?");
+            //@phpstan-ignore-next-line
+            $actions->push($triggerManually);
+        }
+        return $actions;
     }
 
     /**
