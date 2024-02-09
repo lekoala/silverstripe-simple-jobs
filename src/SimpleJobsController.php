@@ -7,8 +7,6 @@ use Exception;
 use Cron\CronExpression;
 use SilverStripe\ORM\DB;
 use Psr\Log\LoggerInterface;
-use SilverStripe\Core\Convert;
-use SilverStripe\Core\ClassInfo;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Environment;
 use SilverStripe\Control\Controller;

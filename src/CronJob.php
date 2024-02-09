@@ -108,7 +108,6 @@ class CronJob extends DataObject
         if (class_exists(CustomAction::class) && Permission::check('ADMIN')) {
             $triggerManually = new CustomAction('triggerManually', 'Trigger manually');
             $triggerManually->setConfirmation("Are you sure you want to trigger the task?");
-            //@phpstan-ignore-next-line
             $actions->push($triggerManually);
         }
         return $actions;
