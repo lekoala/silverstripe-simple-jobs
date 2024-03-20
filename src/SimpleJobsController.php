@@ -224,7 +224,7 @@ class SimpleJobsController extends Controller
             $this->getLogger()->error("Uncleared lock file");
 
             // prevent running tasks < 5 min
-            $t = file_get_contents($lockFile);
+            $t = @file_get_contents($lockFile);
             $nowt = strtotime($now);
             if ($t && $nowt) {
                 $nowMinusFive = strtotime("-5 minutes", $nowt);
@@ -234,7 +234,7 @@ class SimpleJobsController extends Controller
             }
 
             // clear anyway
-            unlink($lockFile);
+            @unlink($lockFile);
         }
         file_put_contents($lockFile, $now);
 
