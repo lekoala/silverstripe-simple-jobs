@@ -188,10 +188,11 @@ class SimpleJobsController extends Controller
         $simpleTask = SimpleTask::getNextTaskToRun();
         if ($simpleTask) {
             $result = $simpleTask->process();
-            if (is_bool($result)) {
-                $result = $result ? 'ok' : 'not ok';
+            $message = 'ok';
+            if ($result === false) {
+                $message = $simpleTask->ErrorMessage ? $simpleTask->ErrorMessage : 'not ok';
             }
-            return print_r($result, true);
+            return $message;
         }
 
         $c = SimpleTask::get()->filter('Processed', 0)->count();
