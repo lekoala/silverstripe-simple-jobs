@@ -7,6 +7,9 @@ use Exception;
 use Cron\CronExpression;
 use SilverStripe\ORM\DB;
 use Psr\Log\LoggerInterface;
+use SilverStripe\Core\Convert;
+use LeKoala\SimpleJobs\CronJob;
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Environment;
 use SilverStripe\Control\Controller;
@@ -63,6 +66,8 @@ class SimpleJobsController extends Controller
         }
 
         parent::init();
+
+        HTTPCacheControlMiddleware::singleton()->disableCache();
     }
 
     /**
@@ -71,8 +76,6 @@ class SimpleJobsController extends Controller
     public function index()
     {
         $this->basicAuth();
-
-        HTTPCacheControlMiddleware::singleton()->disableCache();
 
         if (!Director::isDev()) {
             return 'Listing tasks is only available in dev mode';
@@ -184,10 +187,16 @@ class SimpleJobsController extends Controller
 
         $simpleTask = SimpleTask::getNextTaskToRun();
         if ($simpleTask) {
-            return $simpleTask->process() ? "ok" : "not ok";
+            $result = $simpleTask->process();
+            if (is_bool($result)) {
+                $result = $result ? 'ok' : 'not ok';
+            }
+            return print_r($result, true);
         }
 
-        return 'No task';
+        $c = SimpleTask::get()->filter('Processed', 0)->count();
+        $t = date('Y-m-d H:i:s');
+        return 'No task (' . $c . ' future tasks, current time is ' . $t . ')';
     }
 
     /**
@@ -221,10 +230,10 @@ class SimpleJobsController extends Controller
         $now = date('Y-m-d H:i:s');
         if (is_file($lockFile)) {
             // there is an uncleared lockfile ?
-            $this->getLogger()->error("Uncleared lock file");
+            $this->getLogger()->error("Uncleared lock file ($type)");
 
             // prevent running tasks < 5 min
-            $t = @file_get_contents($lockFile);
+            $t = file_get_contents($lockFile);
             $nowt = strtotime($now);
             if ($t && $nowt) {
                 $nowMinusFive = strtotime("-5 minutes", $nowt);
@@ -234,7 +243,7 @@ class SimpleJobsController extends Controller
             }
 
             // clear anyway
-            @unlink($lockFile);
+            unlink($lockFile);
         }
         file_put_contents($lockFile, $now);
 
