@@ -187,9 +187,9 @@ class SimpleJobsController extends Controller
 
         $simpleTask = SimpleTask::getNextTaskToRun();
         if ($simpleTask) {
-            $result = $simpleTask->process();
+            $failed = $simpleTask->process();
             $message = 'ok';
-            if ($result === false) {
+            if ($failed) {
                 $message = $simpleTask->ErrorMessage ? $simpleTask->ErrorMessage : 'not ok';
             }
             return $message;
