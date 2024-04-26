@@ -16,16 +16,16 @@ use SilverStripe\Security\Member;
  * We only run one task each call to avoid excessive usages
  * Expect some delays if you have many tasks!
  *
- * @property string $Name
- * @property string $Task
+ * @property ?string $Name
+ * @property ?string $Task
  * @property bool $Processed
  * @property bool $Failed
- * @property string $ErrorMessage
+ * @property ?string $ErrorMessage
  * @property int $TimeToExecute
  * @property int $CallsCount
  * @property int $SuccessCalls
  * @property int $ErrorCalls
- * @property string $RunDate
+ * @property ?string $RunDate
  * @property int $OwnerID
  * @method \SilverStripe\Security\Member Owner()
  */

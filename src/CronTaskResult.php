@@ -7,12 +7,12 @@ use SilverStripe\ORM\DataObject;
 /**
  * Store the result of a cron task
  *
- * @property string $TaskClass
- * @property string $Result
+ * @property ?string $TaskClass
+ * @property ?string $Result
  * @property bool $Failed
  * @property bool $ForcedRun
- * @property string $StartDate
- * @property string $EndDate
+ * @property ?string $StartDate
+ * @property ?string $EndDate
  * @property int $TimeToExecute
  */
 class CronTaskResult extends DataObject

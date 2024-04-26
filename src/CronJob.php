@@ -19,10 +19,10 @@ use SilverStripe\Security\Permission;
 /**
  * Class \LeKoala\SimpleJobs\CronJob
  *
- * @property string $TaskClass
- * @property string $Title
- * @property string $Category
- * @property string $Description
+ * @property ?string $TaskClass
+ * @property ?string $Title
+ * @property ?string $Category
+ * @property ?string $Description
  * @property bool $Disabled
  */
 class CronJob extends DataObject
