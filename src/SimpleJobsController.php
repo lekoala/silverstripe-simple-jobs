@@ -231,11 +231,14 @@ class SimpleJobsController extends Controller
         }
         $now = date('Y-m-d H:i:s');
         if (is_file($lockFile)) {
+            $lock_file_warn_early = self::config()->lock_file_warn_early;
             $t = file_get_contents($lockFile);
             $ip = $this->getRequest()->getIP();
 
             // there is an uncleared lockfile ?
-            $this->getLogger()->error("Uncleared lock file created at $t ($type) - $ip");
+            if ($lock_file_warn_early) {
+                $this->getLogger()->error("Uncleared lock file created at $t ($type) - $ip");
+            }
 
             // prevent running tasks < 5 min
             $nowt = strtotime($now);
@@ -244,6 +247,10 @@ class SimpleJobsController extends Controller
                 if (strtotime($t) > $nowMinusFive) {
                     die("Prevent running concurrent queues");
                 }
+            }
+
+            if (!$lock_file_warn_early) {
+                $this->getLogger()->error("Uncleared lock file created at $t ($type) - $ip");
             }
 
             // clear anyway
