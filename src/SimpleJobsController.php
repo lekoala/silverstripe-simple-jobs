@@ -215,6 +215,7 @@ class SimpleJobsController extends Controller
         // Never set a limit longer than the frequency at which this endpoint is called
         Environment::increaseTimeLimitTo(self::config()->time_limit);
 
+        $this->keyAuth();
         $this->basicAuth();
 
         // We can set a type (cron|task). If empty, we run both cron and task
@@ -230,17 +231,26 @@ class SimpleJobsController extends Controller
         }
         $now = date('Y-m-d H:i:s');
         if (is_file($lockFile)) {
+            $lock_file_warn_early = self::config()->lock_file_warn_early;
+            $t = file_get_contents($lockFile);
+            $ip = $this->getRequest()->getIP();
+
             // there is an uncleared lockfile ?
-            $this->getLogger()->error("Uncleared lock file ($type)");
+            if ($lock_file_warn_early) {
+                $this->getLogger()->error("Uncleared lock file created at $t ($type) - $ip");
+            }
 
             // prevent running tasks < 5 min
-            $t = file_get_contents($lockFile);
             $nowt = strtotime($now);
             if ($t && $nowt) {
                 $nowMinusFive = strtotime("-5 minutes", $nowt);
                 if (strtotime($t) > $nowMinusFive) {
                     die("Prevent running concurrent queues");
                 }
+            }
+
+            if (!$lock_file_warn_early) {
+                $this->getLogger()->error("Uncleared lock file created at $t ($type) - $ip");
             }
 
             // clear anyway
@@ -410,6 +420,22 @@ class SimpleJobsController extends Controller
             $message = htmlspecialchars($message ?? '', ENT_QUOTES, 'UTF-8');
         }
         echo $message . '<br />' . PHP_EOL;
+    }
+
+    protected function keyAuth()
+    {
+        $envKey = Environment::getEnv('SIMPLE_JOBS_KEY');
+        if (!$envKey) {
+            return true;
+        }
+        $key = $this->getRequest()->getVar('key');
+        if (!$key) {
+            $key = $this->getRequest()->getHeader('X-KEY');
+        }
+        if ($key != $envKey) {
+            die("Invalid key");
+        }
+        return true;
     }
 
     /**
