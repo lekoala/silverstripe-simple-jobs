@@ -64,6 +64,7 @@ class CronJob extends DataObject
     private static $summary_fields = [
         'Title' => 'Title',
         'Category' => 'Category',
+        'IsDisabled' => 'IsDisabled',
         'Description' => 'Description',
         'LastResult.Created' => 'Last Run',
         'NextRun' => 'Next Run',
