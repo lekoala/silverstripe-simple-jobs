@@ -56,6 +56,11 @@ class SimpleJobsController extends Controller
     protected $basicAuthEnabled = false;
 
     /**
+     * @var string
+     */
+    protected static $currentTask = null;
+
+    /**
      * @return void
      */
     public function init()
@@ -365,6 +370,7 @@ class SimpleJobsController extends Controller
             // Handle exceptions for tasks
             $error = null;
             try {
+                self::$currentTask = get_class($task);
                 // We override docblock return type because we allow a result
                 /** @var mixed $result */
                 $result = $task->process();
@@ -407,6 +413,16 @@ class SimpleJobsController extends Controller
         } else {
             $this->output(get_class($task) . ' will run at ' . $cron->getNextRunDate()->format('Y-m-d H:i:s') . '.');
         }
+
+        self::$currentTask = null;
+    }
+
+    /**
+     * @return ?string
+     */
+    public static function getCurrentTask()
+    {
+        return self::$currentTask;
     }
 
     /**

@@ -18,8 +18,8 @@ use SilverStripe\Security\Member;
  *
  * @property ?string $Name
  * @property ?string $Task
- * @property bool $Processed
- * @property bool $Failed
+ * @property bool|int $Processed
+ * @property bool|int $Failed
  * @property ?string $ErrorMessage
  * @property int $TimeToExecute
  * @property int $CallsCount
@@ -28,6 +28,12 @@ use SilverStripe\Security\Member;
  * @property ?string $RunDate
  * @property int $OwnerID
  * @method \SilverStripe\Security\Member Owner()
+ * @mixin \LeKoala\Base\Extensions\BaseDataObjectExtension
+ * @mixin \SilverStripe\Assets\Shortcodes\FileLinkTracking
+ * @mixin \SilverStripe\Assets\AssetControlExtension
+ * @mixin \SilverStripe\CMS\Model\SiteTreeLinkTracking
+ * @mixin \SilverStripe\Versioned\RecursivePublishable
+ * @mixin \SilverStripe\Versioned\VersionedStateExtension
  */
 class SimpleTask extends DataObject
 {
