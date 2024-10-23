@@ -9,11 +9,17 @@ use SilverStripe\ORM\DataObject;
  *
  * @property ?string $TaskClass
  * @property ?string $Result
- * @property bool $Failed
- * @property bool $ForcedRun
+ * @property bool|int $Failed
+ * @property bool|int $ForcedRun
  * @property ?string $StartDate
  * @property ?string $EndDate
  * @property int $TimeToExecute
+ * @mixin \LeKoala\Base\Extensions\BaseDataObjectExtension
+ * @mixin \SilverStripe\Assets\Shortcodes\FileLinkTracking
+ * @mixin \SilverStripe\Assets\AssetControlExtension
+ * @mixin \SilverStripe\CMS\Model\SiteTreeLinkTracking
+ * @mixin \SilverStripe\Versioned\RecursivePublishable
+ * @mixin \SilverStripe\Versioned\VersionedStateExtension
  */
 class CronTaskResult extends DataObject
 {
