@@ -24,7 +24,6 @@ use SilverStripe\Security\Permission;
  * @property ?string $Category
  * @property ?string $Description
  * @property bool|int $Disabled
- * @mixin \LeKoala\Base\Extensions\BaseDataObjectExtension
  * @mixin \SilverStripe\Assets\Shortcodes\FileLinkTracking
  * @mixin \SilverStripe\Assets\AssetControlExtension
  * @mixin \SilverStripe\CMS\Model\SiteTreeLinkTracking

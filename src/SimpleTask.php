@@ -28,7 +28,6 @@ use SilverStripe\Security\Member;
  * @property ?string $RunDate
  * @property int $OwnerID
  * @method \SilverStripe\Security\Member Owner()
- * @mixin \LeKoala\Base\Extensions\BaseDataObjectExtension
  * @mixin \SilverStripe\Assets\Shortcodes\FileLinkTracking
  * @mixin \SilverStripe\Assets\AssetControlExtension
  * @mixin \SilverStripe\CMS\Model\SiteTreeLinkTracking
@@ -85,7 +84,11 @@ class SimpleTask extends DataObject
      * @var array<string>
      */
     private static $summary_fields = [
-        'Created', 'Name', 'Processed', 'Failed', 'TimeToExecute'
+        'Created',
+        'Name',
+        'Processed',
+        'Failed',
+        'TimeToExecute'
     ];
 
     /**

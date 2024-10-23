@@ -14,7 +14,6 @@ use SilverStripe\ORM\DataObject;
  * @property ?string $StartDate
  * @property ?string $EndDate
  * @property int $TimeToExecute
- * @mixin \LeKoala\Base\Extensions\BaseDataObjectExtension
  * @mixin \SilverStripe\Assets\Shortcodes\FileLinkTracking
  * @mixin \SilverStripe\Assets\AssetControlExtension
  * @mixin \SilverStripe\CMS\Model\SiteTreeLinkTracking
@@ -60,7 +59,10 @@ class CronTaskResult extends DataObject
      * @var array<string, string>
      */
     private static $summary_fields = [
-        'Created' => 'Created', 'TaskClass' => 'Task Class', 'Failed' => 'Failed', 'TimeToExecute' => 'Time To Execute'
+        'Created' => 'Created',
+        'TaskClass' => 'Task Class',
+        'Failed' => 'Failed',
+        'TimeToExecute' => 'Time To Execute'
     ];
 
     public function Status(): string

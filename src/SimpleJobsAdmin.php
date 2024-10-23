@@ -9,8 +9,7 @@ use SilverStripe\Forms\GridField\GridFieldConfig;
 use SilverStripe\Forms\GridField\GridFieldAddNewButton;
 
 /**
- * Class \LeKoala\SimpleJobs\SimpleJobsAdmin
- *
+ * Show all jobs and their results
  */
 class SimpleJobsAdmin extends ModelAdmin
 {
