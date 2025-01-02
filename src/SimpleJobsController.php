@@ -211,7 +211,7 @@ class SimpleJobsController extends Controller
      *
      * If unspecified, it will run all jobs and the next task
      *
-     * @return void|string
+     * @return void
      */
     public function trigger()
     {
@@ -248,7 +248,8 @@ class SimpleJobsController extends Controller
             if ($t && $nowt) {
                 $nowMinusFive = strtotime("-5 minutes", $nowt);
                 if (strtotime($t) > $nowMinusFive) {
-                    die("Prevent running concurrent queues");
+                    $this->output("Prevent running concurrent queues");
+                    return;
                 }
             }
 
@@ -263,8 +264,11 @@ class SimpleJobsController extends Controller
 
         $tasks = CronJob::allTasks();
         if (empty($tasks)) {
-            return "There are no implementators of CronTask to run";
+            $this->output("There are no implementators of CronTask to run");
+            return;
         }
+
+        // Do we have a cron job to run ?
         if (!$type || $type == "cron") {
             foreach ($tasks as $subclass) {
                 $cronJob = CronJob::getByTaskClass($subclass);
@@ -277,12 +281,14 @@ class SimpleJobsController extends Controller
                 $this->runTask($task);
             }
 
+            if (empty($tasks)) {
+                $this->output("No jobs");
+            }
+
             // Avoid the table to be full of stuff
             if (self::config()->auto_clean) {
-                $time = date('Y-m-d', strtotime(self::config()->auto_clean_threshold));
                 if (self::config()->store_results) {
-                    $sql = "DELETE FROM \"CronTaskResult\" WHERE \"Created\" < '$time'";
-                    DB::query($sql);
+                    self::clearResultsTable();
                 }
             }
         }
@@ -296,11 +302,10 @@ class SimpleJobsController extends Controller
             } else {
                 $this->output("No task");
             }
+
             // Avoid the table to be full of stuff
             if (self::config()->auto_clean) {
-                $time = date('Y-m-d', strtotime(self::config()->auto_clean_threshold));
-                $sql = "DELETE FROM \"SimpleTask\" WHERE \"Created\" < '$time'";
-                DB::query($sql);
+                self::clearTasksTable();
             }
         }
 
@@ -308,6 +313,32 @@ class SimpleJobsController extends Controller
         if (is_file($lockFile)) {
             unlink($lockFile);
         }
+    }
+
+    /**
+     * @return void
+     */
+    public static function clearTasksTable()
+    {
+        if (!self::config()->auto_clean_threshold) {
+            return;
+        }
+        $time = date('Y-m-d', strtotime(self::config()->auto_clean_threshold));
+        $sql = "DELETE FROM \"SimpleTask\" WHERE \"Created\" < '$time'";
+        DB::query($sql);
+    }
+
+    /**
+     * @return void
+     */
+    public static function clearResultsTable()
+    {
+        if (!self::config()->auto_clean_threshold) {
+            return;
+        }
+        $time = date('Y-m-d', strtotime(self::config()->auto_clean_threshold));
+        $sql = "DELETE FROM \"CronTaskResult\" WHERE \"Created\" < '$time'";
+        DB::query($sql);
     }
 
     /**

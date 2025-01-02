@@ -9,6 +9,7 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Security\Security;
 use SilverStripe\Control\Controller;
 use LeKoala\SimpleJobs\SimpleJobsController;
+use SilverStripe\ORM\DB;
 use SilverStripe\Security\DefaultAdminService;
 
 /**
@@ -92,5 +93,18 @@ class SimpleJobsTest extends SapphireTest
     public function testHasTasks(): void
     {
         $this->assertNotEmpty(CronJob::allTasks());
+    }
+
+    public function testClearResults(): void
+    {
+        $t = date('Y-m-d', strtotime('-1 year'));
+        DB::query("INSERT INTO CronTaskResult (Created) VALUES ('$t')");
+
+        $count = DB::query('SELECT COUNT(*) FROM CronTaskResult')->value();
+
+        SimpleJobsController::clearResultsTable();
+
+        $newCount = DB::query('SELECT COUNT(*) FROM CronTaskResult')->value();
+        $this->assertNotEquals($count, $newCount);
     }
 }
