@@ -304,8 +304,10 @@ class SimpleJobsController extends Controller
             }
         }
 
-        // Clear lock file
-        unlink($lockFile);
+        // Clear lock file (check if it hasn't be cleared in the meantime)
+        if (is_file($lockFile)) {
+            unlink($lockFile);
+        }
     }
 
     /**
