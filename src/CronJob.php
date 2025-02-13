@@ -166,7 +166,7 @@ class CronJob extends DataObject
             $obj->TaskClass = $class;
             $obj->Title =  method_exists($class, 'getJobTitle') ? $class::getJobTitle() : $class;
             $obj->Category = method_exists($class, 'getJobCategory') ? $class::getJobCategory() : 'general';
-            $obj->Description = method_exists($class, 'getJobDescription') ? $class::getJobDescription() : '';
+            $obj->Description = method_exists($class, 'getJobDescription') ? $class::getJobDescription() : null;
             $obj->write();
         }
     }
