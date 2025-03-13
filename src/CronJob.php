@@ -75,6 +75,21 @@ class CronJob extends DataObject
         'NextRun' => 'Next Run',
     ];
 
+    public function canView($member = null, $context = [])
+    {
+        return Permission::check('CMS_ACCESS_SimpleJobsAdmin', 'any', $member);
+    }
+
+    public function canEdit($member = null, $context = [])
+    {
+        return Permission::check('CMS_ACCESS_SimpleJobsAdmin', 'any', $member);
+    }
+
+    public function canCreate($member = null, $context = [])
+    {
+        return Permission::check('CMS_ACCESS_SimpleJobsAdmin', 'any', $member);
+    }
+
     /**
      * @param Member $member
      * @return boolean

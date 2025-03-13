@@ -3,6 +3,7 @@
 namespace LeKoala\SimpleJobs;
 
 use SilverStripe\ORM\DataObject;
+use SilverStripe\Security\Permission;
 
 /**
  * Store the result of a cron task
@@ -64,6 +65,26 @@ class CronTaskResult extends DataObject
         'Failed' => 'Failed',
         'TimeToExecute' => 'Time To Execute'
     ];
+
+    public function canView($member = null, $context = [])
+    {
+        return Permission::check('CMS_ACCESS_SimpleJobsAdmin', 'any', $member);
+    }
+
+    public function canEdit($member = null, $context = [])
+    {
+        return Permission::check('CMS_ACCESS_SimpleJobsAdmin', 'any', $member);
+    }
+
+    public function canCreate($member = null, $context = [])
+    {
+        return Permission::check('CMS_ACCESS_SimpleJobsAdmin', 'any', $member);
+    }
+
+    public function canDelete($member = null)
+    {
+        return Permission::check('CMS_ACCESS_SimpleJobsAdmin', 'any', $member);
+    }
 
     public function Status(): string
     {

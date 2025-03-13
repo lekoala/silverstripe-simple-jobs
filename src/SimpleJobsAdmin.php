@@ -47,6 +47,8 @@ class SimpleJobsAdmin extends ModelAdmin
      */
     private static $page_length = 50;
 
+    private static $required_permission_codes = 'CMS_ACCESS_SimpleJobsAdmin';
+
     /**
      * @return DataList
      */

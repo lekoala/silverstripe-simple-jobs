@@ -7,6 +7,7 @@ use SilverStripe\ORM\DB;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Security\Member;
+use SilverStripe\Security\Permission;
 
 /**
  * A simple class to schedule function calls
@@ -90,6 +91,26 @@ class SimpleTask extends DataObject
         'Failed',
         'TimeToExecute'
     ];
+
+    public function canView($member = null, $context = [])
+    {
+        return Permission::check('CMS_ACCESS_SimpleJobsAdmin', 'any', $member);
+    }
+
+    public function canEdit($member = null, $context = [])
+    {
+        return Permission::check('CMS_ACCESS_SimpleJobsAdmin', 'any', $member);
+    }
+
+    public function canCreate($member = null, $context = [])
+    {
+        return Permission::check('CMS_ACCESS_SimpleJobsAdmin', 'any', $member);
+    }
+
+    public function canDelete($member = null)
+    {
+        return Permission::check('CMS_ACCESS_SimpleJobsAdmin', 'any', $member);
+    }
 
     /**
      * @return void
