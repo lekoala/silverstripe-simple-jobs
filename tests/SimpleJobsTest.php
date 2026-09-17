@@ -11,6 +11,7 @@ use SilverStripe\Control\Controller;
 use LeKoala\SimpleJobs\SimpleJobsController;
 use SilverStripe\ORM\DB;
 use SilverStripe\Security\DefaultAdminService;
+use SilverStripe\CronTask\Interfaces\CronTask;
 
 /**
  * Test for SimpleJobs
@@ -106,5 +107,69 @@ class SimpleJobsTest extends SapphireTest
 
         $newCount = DB::query('SELECT COUNT(*) FROM CronTaskResult')->value();
         $this->assertNotEquals($count, $newCount);
+    }
+
+    public function testTriggerClearsItsLockAfterException(): void
+    {
+        $lockFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'simple-jobs-' . bin2hex(random_bytes(8));
+        $failingTask = new class (false) implements CronTask {
+            public function __construct(bool $fail = true)
+            {
+                if ($fail) {
+                    throw new \RuntimeException('Expected test exception');
+                }
+            }
+
+            public function getSchedule()
+            {
+                return '* * * * *';
+            }
+
+            public function process()
+            {
+            }
+        };
+        $controller = new class ($lockFile, get_class($failingTask)) extends SimpleJobsController {
+            /** @var string */
+            private $testLockFile;
+
+            /** @var class-string */
+            private $testTaskClass;
+
+            public function __construct(string $testLockFile, string $testTaskClass)
+            {
+                parent::__construct();
+                $this->testLockFile = $testLockFile;
+                $this->testTaskClass = $testTaskClass;
+            }
+
+            protected function getLockFile($type): string
+            {
+                return $this->testLockFile;
+            }
+
+            protected function getCronTasks(): array
+            {
+                return [$this->testTaskClass];
+            }
+        };
+        $exceptionThrown = false;
+        $lockWasRemoved = false;
+        ob_start();
+        try {
+            $controller->trigger();
+        } catch (\RuntimeException $exception) {
+            $exceptionThrown = true;
+            $this->assertSame('Expected test exception', $exception->getMessage());
+        } finally {
+            ob_end_clean();
+            $lockWasRemoved = !is_file($lockFile);
+            if (!$lockWasRemoved) {
+                unlink($lockFile);
+            }
+        }
+
+        $this->assertTrue($exceptionThrown);
+        $this->assertTrue($lockWasRemoved);
     }
 }

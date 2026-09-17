@@ -228,91 +228,119 @@ class SimpleJobsController extends Controller
         }
 
         // Create the lock file
+        $lockFile = $this->getLockFile($type);
+        $now = date('Y-m-d H:i:s');
+        $lockValue = $now . '|' . bin2hex(random_bytes(16));
+        $lockHandle = @fopen($lockFile, 'x');
+        if (!$lockHandle) {
+            $lock_file_warn_early = self::config()->lock_file_warn_early;
+            $t = @file_get_contents($lockFile);
+            $lockTime = explode('|', (string) $t, 2)[0];
+            $lockTimestamp = strtotime($lockTime);
+            if (!$lockTimestamp) {
+                $lockTimestamp = @filemtime($lockFile);
+            }
+            $ip = $this->getRequest()->getIP();
+            // there is an uncleared lockfile ?
+            if ($lock_file_warn_early) {
+                $this->getLogger()->error("Uncleared lock file created at $lockTime ($type) - $ip");
+            }
+            // prevent running tasks < 5 min
+            if ($lockTimestamp && $lockTimestamp > strtotime("-5 minutes")) {
+                $this->output("Prevent running concurrent queues");
+                return;
+            }
+
+            if (!$lock_file_warn_early) {
+                $this->getLogger()->error("Uncleared lock file created at $lockTime ($type) - $ip");
+            }
+            // clear anyway
+            @unlink($lockFile);
+            $lockHandle = @fopen($lockFile, 'x');
+            if (!$lockHandle) {
+                $this->output("Prevent running concurrent queues");
+                return;
+            }
+        }
+        $written = fwrite($lockHandle, $lockValue);
+        fclose($lockHandle);
+        if ($written !== strlen($lockValue)) {
+            if (is_file($lockFile)) {
+                unlink($lockFile);
+            }
+            throw new Exception("Could not create lock file");
+        }
+        try {
+            $tasks = $this->getCronTasks();
+            if (empty($tasks)) {
+                $this->output("There are no implementators of CronTask to run");
+                return;
+            }
+
+            // Do we have a cron job to run ?
+            if (!$type || $type == "cron") {
+                foreach ($tasks as $subclass) {
+                    $cronJob = CronJob::getByTaskClass($subclass);
+                    if ($cronJob && $cronJob->IsDisabled()) {
+                        $this->output("Task $subclass is disabled");
+                        continue;
+                    }
+                    /** @var \SilverStripe\CronTask\Interfaces\CronTask $task */
+                    $task = new $subclass();
+                    $this->runTask($task);
+                }
+
+                // Avoid the table to be full of stuff
+                if (self::config()->auto_clean) {
+                    if (self::config()->store_results) {
+                        self::clearResultsTable();
+                    }
+                }
+            }
+
+            // Do we have a simple task to run ?
+            if (!$type || $type == "task") {
+                $simpleTask = SimpleTask::getNextTaskToRun();
+                if ($simpleTask) {
+                    $simpleTask->process();
+                    $this->output("Processed task {$simpleTask->ID}");
+                } else {
+                    $this->output("No task");
+                }
+
+                // Avoid the table to be full of stuff
+                if (self::config()->auto_clean) {
+                    self::clearTasksTable();
+                }
+            }
+        } finally {
+            // Only clear the lock created by this process. It may have been
+            // replaced in the meantime after a manual or stale-lock cleanup.
+            if (is_file($lockFile) && @file_get_contents($lockFile) === $lockValue) {
+                @unlink($lockFile);
+            }
+        }
+    }
+
+    /**
+     * @param string|null $type
+     * @return string
+     */
+    protected function getLockFile($type): string
+    {
         $lockFile = Director::baseFolder() . "/.simple-jobs-lock";
         if ($type) {
             $lockFile .= "-" . $type;
         }
-        $now = date('Y-m-d H:i:s');
-        if (is_file($lockFile)) {
-            $lock_file_warn_early = self::config()->lock_file_warn_early;
-            $t = file_get_contents($lockFile);
-            $ip = $this->getRequest()->getIP();
+        return $lockFile;
+    }
 
-            // there is an uncleared lockfile ?
-            if ($lock_file_warn_early) {
-                $this->getLogger()->error("Uncleared lock file created at $t ($type) - $ip");
-            }
-
-            // prevent running tasks < 5 min
-            $nowt = strtotime($now);
-            if ($t && $nowt) {
-                $nowMinusFive = strtotime("-5 minutes", $nowt);
-                if (strtotime($t) > $nowMinusFive) {
-                    $this->output("Prevent running concurrent queues");
-                    return;
-                }
-            }
-
-            if (!$lock_file_warn_early) {
-                $this->getLogger()->error("Uncleared lock file created at $t ($type) - $ip");
-            }
-
-            // clear anyway
-            unlink($lockFile);
-        }
-        file_put_contents($lockFile, $now);
-
-        $tasks = CronJob::allTasks();
-        if (empty($tasks)) {
-            $this->output("There are no implementators of CronTask to run");
-            return;
-        }
-
-        // Do we have a cron job to run ?
-        if (!$type || $type == "cron") {
-            foreach ($tasks as $subclass) {
-                $cronJob = CronJob::getByTaskClass($subclass);
-                if ($cronJob && $cronJob->IsDisabled()) {
-                    $this->output("Task $subclass is disabled");
-                    continue;
-                }
-                /** @var \SilverStripe\CronTask\Interfaces\CronTask $task */
-                $task = new $subclass();
-                $this->runTask($task);
-            }
-
-            if (empty($tasks)) {
-                $this->output("No jobs");
-            }
-
-            // Avoid the table to be full of stuff
-            if (self::config()->auto_clean) {
-                if (self::config()->store_results) {
-                    self::clearResultsTable();
-                }
-            }
-        }
-
-        // Do we have a simple task to run ?
-        if (!$type || $type == "task") {
-            $simpleTask = SimpleTask::getNextTaskToRun();
-            if ($simpleTask) {
-                $simpleTask->process();
-                $this->output("Processed task {$simpleTask->ID}");
-            } else {
-                $this->output("No task");
-            }
-
-            // Avoid the table to be full of stuff
-            if (self::config()->auto_clean) {
-                self::clearTasksTable();
-            }
-        }
-
-        // Clear lock file (check if it hasn't be cleared in the meantime)
-        if (is_file($lockFile)) {
-            unlink($lockFile);
-        }
+    /**
+     * @return array<class-string>
+     */
+    protected function getCronTasks(): array
+    {
+        return CronJob::allTasks();
     }
 
     /**
